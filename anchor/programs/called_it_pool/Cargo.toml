@@ -1,0 +1,20 @@
+[package]
+name = "called_it_pool"
+version = "0.1.0"
+description = "Escrow for a Called It money room"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "called_it_pool"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "0.30.1"
