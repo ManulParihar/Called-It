@@ -1,0 +1,5 @@
+# This file only exists so the Supabase GitHub integration can find our
+# migrations. We do not run the local Supabase stack for this project; the
+# app always talks to a hosted Supabase project through the keys in
+# .env.local.
+project_id = "called-it"

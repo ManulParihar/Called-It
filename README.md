@@ -48,12 +48,21 @@ is also a cancel path that refunds everyone if a match is abandoned.
 - `anchor` - the Solana escrow program.
 - `test` - unit tests for the scoring and question logic.
 
+## Database
+
+The schema lives in `supabase/migrations`. Apply it to a fresh Supabase
+project either by pasting the SQL file into the project's SQL editor, or by
+connecting the repo through Supabase's GitHub integration, which applies new
+migrations on every push to `main`.
+
 ## Local setup
 
 1. Install dependencies with `npm install`.
 2. Copy `.env.example` to `.env.local` and fill in the values.
-3. Run the app with `npm run dev`.
-4. Run the match worker with `npm run worker`.
+3. Apply the schema in `supabase/migrations` to your Supabase project.
+4. Run the app with `npm run dev`.
+5. Seed a couple of fixtures with `npm run seed`.
+6. Run the match worker with `npm run worker`.
 
 ## Scripts
 
