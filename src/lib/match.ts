@@ -124,9 +124,12 @@ export interface MatchState {
   phase: MatchPhase;
   minute: number;
 
+  // Goals scored in normal time and extra time. Shootout goals are kept apart
+  // because a shootout decides the tie separately from the score line.
   goals: TeamCounts;
   goalsFirstHalf: TeamCounts;
   goalsSecondHalf: TeamCounts;
+  shootoutGoals: TeamCounts;
 
   // Score captured at the moment the match reached half time.
   halfTimeScore: TeamCounts | null;
@@ -151,6 +154,40 @@ export interface MatchState {
   updatedAt: string;
 }
 
+// Phases that are part of a penalty shootout.
+export const PENALTY_PHASES: MatchPhase[] = [
+  "awaiting_penalties",
+  "penalties",
+  "penalties_break",
+  "penalties_end",
+];
+
+export function isPenaltyPhase(phase: MatchPhase): boolean {
+  return PENALTY_PHASES.includes(phase);
+}
+
+export function isFinished(state: MatchState): boolean {
+  return FINISHED_PHASES.includes(state.phase);
+}
+
+export function isVoid(state: MatchState): boolean {
+  return VOID_PHASES.includes(state.phase);
+}
+
+// The winning side once the match is final, or null for a draw or a match that
+// is not finished. A shootout is decided on shootout goals; everything else is
+// decided on the score line.
+export function matchWinner(state: MatchState): TeamSide | null {
+  if (!isFinished(state)) return null;
+  if (state.goals.home !== state.goals.away) {
+    return state.goals.home > state.goals.away ? "home" : "away";
+  }
+  if (state.shootoutGoals.home !== state.shootoutGoals.away) {
+    return state.shootoutGoals.home > state.shootoutGoals.away ? "home" : "away";
+  }
+  return null;
+}
+
 export function emptyCounts(): TeamCounts {
   return { home: 0, away: 0 };
 }
@@ -163,6 +200,7 @@ export function initialMatchState(fixtureId: string): MatchState {
     goals: emptyCounts(),
     goalsFirstHalf: emptyCounts(),
     goalsSecondHalf: emptyCounts(),
+    shootoutGoals: emptyCounts(),
     halfTimeScore: null,
     yellowCards: emptyCounts(),
     redCards: emptyCounts(),

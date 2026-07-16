@@ -4,7 +4,7 @@
 // next state. This makes it easy to test and to replay a recorded match by
 // applying events one at a time.
 
-import type { MatchEvent, MatchState, TeamSide } from "./match";
+import { isPenaltyPhase, type MatchEvent, type MatchState, type TeamSide } from "./match";
 
 function bump(counts: { home: number; away: number }, team: TeamSide) {
   return {
@@ -19,6 +19,7 @@ export function applyEvent(state: MatchState, event: MatchEvent): MatchState {
     goals: { ...state.goals },
     goalsFirstHalf: { ...state.goalsFirstHalf },
     goalsSecondHalf: { ...state.goalsSecondHalf },
+    shootoutGoals: { ...state.shootoutGoals },
     yellowCards: { ...state.yellowCards },
     redCards: { ...state.redCards },
     corners: { ...state.corners },
@@ -43,6 +44,14 @@ export function applyEvent(state: MatchState, event: MatchEvent): MatchState {
 
     case "goal": {
       if (!event.team) break;
+
+      // Shootout goals decide the tie separately and do not change the score
+      // line, so keep them in their own counter.
+      if (isPenaltyPhase(next.phase)) {
+        next.shootoutGoals = bump(next.shootoutGoals, event.team);
+        break;
+      }
+
       next.goals = bump(next.goals, event.team);
       if (next.firstGoalTeam === null) next.firstGoalTeam = event.team;
 
