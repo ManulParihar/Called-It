@@ -117,6 +117,14 @@ export interface PayoutShare {
   amountCents: number;
 }
 
+// Everything the screens need about one room, returned by the room endpoints.
+export interface RoomBundle {
+  room: Room;
+  members: Member[];
+  questions: Question[];
+  answers: Answer[];
+}
+
 // The full result of a room, ready to show and to settle.
 export interface RoomResult {
   roomId: string;

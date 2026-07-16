@@ -12,6 +12,7 @@ import type {
   Member,
   Question,
   Room,
+  RoomBundle,
 } from "../lib/types";
 import { serverDb } from "./db/supabase";
 import {
@@ -70,13 +71,6 @@ export const submitAnswersSchema = z.object({
     .min(1),
 });
 export type SubmitAnswersInput = z.infer<typeof submitAnswersSchema>;
-
-export interface RoomBundle {
-  room: Room;
-  members: Member[];
-  questions: Question[];
-  answers: Answer[];
-}
 
 async function fetchFixture(fixtureId: string): Promise<Fixture> {
   const db = serverDb();
