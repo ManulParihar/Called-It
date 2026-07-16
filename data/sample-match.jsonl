@@ -1,0 +1,20 @@
+{"offsetMs": 0, "kind": "phase_change", "phase": "first_half"}
+{"offsetMs": 3000, "kind": "corner", "team": "home", "minute": 3}
+{"offsetMs": 12000, "kind": "yellow_card", "team": "away", "minute": 12}
+{"offsetMs": 15000, "kind": "corner", "team": "away", "minute": 15}
+{"offsetMs": 23000, "kind": "goal", "team": "home", "minute": 23}
+{"offsetMs": 31000, "kind": "corner", "team": "home", "minute": 31}
+{"offsetMs": 38000, "kind": "goal", "team": "away", "minute": 38}
+{"offsetMs": 45000, "kind": "phase_change", "phase": "half_time", "minute": 45}
+{"offsetMs": 46000, "kind": "phase_change", "phase": "second_half", "minute": 46}
+{"offsetMs": 52000, "kind": "yellow_card", "team": "home", "minute": 52}
+{"offsetMs": 58000, "kind": "corner", "team": "away", "minute": 58}
+{"offsetMs": 63000, "kind": "penalty_awarded", "minute": 63}
+{"offsetMs": 64000, "kind": "goal", "team": "away", "minute": 64}
+{"offsetMs": 70000, "kind": "var_review", "minute": 70}
+{"offsetMs": 75000, "kind": "yellow_card", "team": "home", "minute": 75}
+{"offsetMs": 82000, "kind": "corner", "team": "home", "minute": 82}
+{"offsetMs": 88000, "kind": "red_card", "team": "away", "minute": 88}
+{"offsetMs": 92000, "kind": "goal", "team": "home", "minute": 92}
+{"offsetMs": 93000, "kind": "goal", "team": "home", "minute": 93}
+{"offsetMs": 95000, "kind": "phase_change", "phase": "ended", "minute": 95}
