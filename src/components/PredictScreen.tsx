@@ -36,6 +36,7 @@ export function PredictScreen({
       onSubmitted();
     } catch (err) {
       setError((err as Error).message);
+    } finally {
       setBusy(false);
     }
   }
