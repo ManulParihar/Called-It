@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --import tsx test",
+    "test": "node --import tsx --test test/*.test.ts",
     "worker": "tsx src/server/worker/run.ts"
   },
   "dependencies": {
