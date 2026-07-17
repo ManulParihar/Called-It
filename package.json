@@ -5,13 +5,16 @@
   "description": "Group prediction game for live football, backed by TxLINE match data and a Solana pot",
   "scripts": {
     "dev": "next dev",
+    "local": "LOCAL_DB=1 NEXT_PUBLIC_LOCAL_DB=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
     "worker": "tsx src/server/worker/run.ts",
-    "seed": "tsx scripts/seed.ts"
+    "worker:local": "LOCAL_DB=1 tsx src/server/worker/run.ts",
+    "seed": "tsx scripts/seed.ts",
+    "seed:local": "LOCAL_DB=1 tsx scripts/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

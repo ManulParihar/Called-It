@@ -23,6 +23,12 @@ export interface SubscribeOptions {
 }
 
 export function subscribeRoom(options: SubscribeOptions): () => void {
+  // In local mode there is no realtime server. Throwing here makes the room hook
+  // fall back to polling, which is enough to watch the game move.
+  if (process.env.NEXT_PUBLIC_LOCAL_DB === "1") {
+    throw new Error("Realtime is off in local mode");
+  }
+
   const db = browserDb();
   const { roomId, fixtureId, onChange } = options;
 
