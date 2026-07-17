@@ -4,6 +4,7 @@
 // sits big and lit under the pointer, like a price on the bookie's board.
 
 import { useEffect, useRef } from "react";
+import { useSoundCues } from "@/hooks/useSoundCues";
 
 const STAKES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const ITEM_WIDTH = 92;
@@ -17,6 +18,7 @@ export function StakeRoller({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { cue } = useSoundCues();
 
   // Start the roller on the current value.
   useEffect(() => {
@@ -35,7 +37,10 @@ export function StakeRoller({
     settleTimer.current = setTimeout(() => {
       const index = Math.round(track.scrollLeft / ITEM_WIDTH);
       const stake = STAKES[Math.min(STAKES.length - 1, Math.max(0, index))];
-      if (stake !== value) onChange(stake);
+      if (stake !== value) {
+        cue("tick"); // the mechanical click as the board snaps to a price
+        onChange(stake);
+      }
     }, 80);
   }
 
@@ -43,6 +48,7 @@ export function StakeRoller({
     const track = trackRef.current;
     if (!track) return;
     track.scrollTo({ left: STAKES.indexOf(stake) * ITEM_WIDTH, behavior: "smooth" });
+    if (stake !== value) cue("tick");
     onChange(stake);
   }
 

@@ -36,6 +36,7 @@ const PHASE_LABELS: Record<string, string> = {
 const LOUD: Record<string, SoundCue> = {
   goal: "goal",
   red_card: "red_card",
+  yellow_card: "yellow_card",
   penalty_awarded: "penalty",
   var_review: "var",
 };
@@ -212,6 +213,11 @@ export function LiveScreen({
         if (nextReferee.act) setRefereeCue({ act: nextReferee.act, key: event.id });
       }
       if (LOUD[event.kind]) cue(LOUD[event.kind]);
+      // The referee's whistle for kickoff and the restart. (Full time is
+      // handled on the full-time screen, which this one gives way to.)
+      if (event.kind === "phase_change" && (event.phase === "first_half" || event.phase === "second_half")) {
+        cue("whistle");
+      }
       if (onNotify) {
         const banner = notificationFor(event, name, room.fixture, matchStateRef.current);
         if (banner) onNotify(banner);
