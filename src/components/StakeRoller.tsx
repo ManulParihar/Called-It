@@ -1,7 +1,7 @@
 "use client";
 
-// Slot machine style stake picker. Values roll sideways and snap, the chosen
-// one sits big in the middle under the pointer.
+// The odds board stake picker. Values roll sideways and snap; the chosen one
+// sits big and lit under the pointer, like a price on the bookie's board.
 
 import { useEffect, useRef } from "react";
 
@@ -57,9 +57,9 @@ export function StakeRoller({
           transform: "translateX(-50%)",
           width: 0,
           height: 0,
-          borderLeft: "9px solid transparent",
-          borderRight: "9px solid transparent",
-          borderTop: "10px solid var(--gold)",
+          borderLeft: "8px solid transparent",
+          borderRight: "8px solid transparent",
+          borderTop: "9px solid var(--chalk)",
           zIndex: 2,
         }}
       />
@@ -72,9 +72,9 @@ export function StakeRoller({
           scrollSnapType: "x mandatory",
           scrollbarWidth: "none",
           padding: `14px calc(50% - ${ITEM_WIDTH / 2}px)`,
-          background: "var(--night-3)",
+          background: "var(--pitch-3)",
           borderRadius: "var(--radius)",
-          border: "2px solid rgba(255,243,226,0.12)",
+          border: "1px solid var(--chalk-line)",
           maskImage:
             "linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent)",
           WebkitMaskImage:
@@ -90,17 +90,19 @@ export function StakeRoller({
               style={{
                 flex: `0 0 ${ITEM_WIDTH}px`,
                 scrollSnapAlign: "center",
-                fontFamily: "var(--font-display)",
-                fontSize: on ? 34 : 22,
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                fontVariantNumeric: "tabular-nums",
+                fontSize: on ? 32 : 20,
                 color: on
                   ? stake === 0
-                    ? "var(--sky)"
-                    : "var(--lime)"
-                  : "var(--cream-dim)",
+                    ? "var(--chalk)"
+                    : "var(--amber)"
+                  : "var(--chalk-dim)",
                 opacity: on ? 1 : 0.45,
                 transform: on ? "scale(1)" : "scale(0.85)",
-                transition: "all 0.18s ease",
-                textShadow: on ? "0 0 18px rgba(200,245,39,0.5)" : "none",
+                transition:
+                  "transform 180ms cubic-bezier(0.23,1,0.32,1), color 180ms ease, opacity 180ms ease, font-size 180ms ease",
               }}
             >
               {stake === 0 ? "FREE" : `$${stake}`}

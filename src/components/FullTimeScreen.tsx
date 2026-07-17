@@ -1,7 +1,7 @@
 "use client";
 
-// Full time. The final score, the winners on the podium, the money split or
-// the forfeit read out loud by the referee.
+// Full time. The final score, the winners, the money split — or the
+// settlement slip with the forfeit stamped on it, read out by the bookie.
 
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
@@ -14,6 +14,8 @@ import { useSoundCues } from "@/hooks/useSoundCues";
 import { Leaderboard } from "./Leaderboard";
 import { MascotAvatar } from "./MascotAvatar";
 import { Referee } from "./Referee";
+
+const EASE = [0.23, 1, 0.32, 1] as const;
 
 export function FullTimeScreen({
   bundle,
@@ -44,7 +46,7 @@ export function FullTimeScreen({
       particleCount: meWon ? 220 : 80,
       spread: 100,
       origin: { y: 0.4 },
-      colors: ["#c8f527", "#ff2e88", "#ffcf3f", "#3fd8e8"],
+      colors: ["#f2f4ec", "#ffb520", "#45b26b", "#f4efe2"],
     });
     // Once, when the screen appears.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,11 +55,11 @@ export function FullTimeScreen({
   const forfeitRoom = room.wagerType === "forfeit";
   const refereeLine = forfeitRoom
     ? losers.length > 0
-      ? `Hear ye! ${losers.map((l) => l.displayName).join(" and ")} must now: ${room.forfeitText}!`
-      : "All square! Nobody owes a thing. Boring, but fair."
+      ? `Slips checked. ${losers.map((l) => l.displayName).join(" and ")} — you owe: ${room.forfeitText}. Pay up.`
+      : "All square. Nobody pays. Rarest result in football."
     : winners.length > 0
-      ? `${winners.map((w) => w.displayName).join(" and ")} called it! Pay the champions!`
-      : "No winners tonight. The pot goes back.";
+      ? `${winners.map((w) => w.displayName).join(" and ")} called it. The pot's theirs.`
+      : "Nobody called it. The pot goes back where it came from.";
 
   return (
     <main style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
@@ -65,51 +67,45 @@ export function FullTimeScreen({
         <p className="eyebrow">Full time</p>
         <h1 style={{ fontSize: 26 }}>
           {room.fixture.homeTeam}{" "}
-          <span style={{ color: "var(--gold)" }}>
-            {matchState?.goals.home ?? 0}:{matchState?.goals.away ?? 0}
+          <span className="tnum" style={{ color: "var(--amber)" }}>
+            {matchState?.goals.home ?? 0}–{matchState?.goals.away ?? 0}
           </span>{" "}
           {room.fixture.awayTeam}
         </h1>
         <motion.p
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 16 }}
+          initial={{ scale: 0.92, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", duration: 0.45, bounce: 0.35 }}
           className="display"
           style={{
             marginTop: 8,
-            fontSize: 22,
-            color: meWon ? "var(--lime)" : meLost ? "var(--danger)" : "var(--cream)",
+            fontSize: 26,
+            color: meWon
+              ? "var(--grass)"
+              : meLost
+                ? "var(--stamp-bright)"
+                : "var(--chalk)",
           }}
         >
-          {meWon ? "You called it!" : meLost ? "Rough night, champ." : "Middle of the pack."}
+          {meWon ? "You called it" : meLost ? "It's you. You pay." : "Safe. Not glorious."}
         </motion.p>
       </header>
 
-      {/* winners podium */}
+      {/* winners */}
       {winners.length > 0 && (
         <section
-          style={{ display: "flex", justifyContent: "center", gap: 18, padding: "4px 0" }}
+          style={{ display: "flex", justifyContent: "center", gap: 20, padding: "4px 0" }}
         >
           {winners.map((w, i) => (
             <motion.div
               key={w.memberId}
-              initial={{ y: 40, opacity: 0 }}
+              initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 + i * 0.1, type: "spring", stiffness: 220, damping: 16 }}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+              transition={{ delay: 0.3 + i * 0.08, type: "spring", duration: 0.5, bounce: 0.3 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
             >
-              <motion.span
-                animate={{ rotate: [0, -8, 8, 0] }}
-                transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 0.6 }}
-                className="display"
-                style={{ fontSize: 22, color: "var(--gold)" }}
-              >
-                ♛
-              </motion.span>
-              <div className="floaty">
-                <MascotAvatar mascotId={w.mascotId} size={76} />
-              </div>
-              <span className="display" style={{ fontSize: 13, color: "var(--gold)" }}>
+              <MascotAvatar mascotId={w.mascotId} size={72} />
+              <span className="display" style={{ fontSize: 13, color: "var(--amber)" }}>
                 {w.displayName}
               </span>
             </motion.div>
@@ -119,28 +115,53 @@ export function FullTimeScreen({
 
       <Referee mood={forfeitRoom && losers.length > 0 ? "hype" : "celebrate"} line={refereeLine} />
 
-      {/* the forfeit, big and unmissable */}
+      {/* the settlement slip, stamped loud */}
       {forfeitRoom && losers.length > 0 && (
         <motion.section
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 14 }}
-          className="card"
-          style={{
-            textAlign: "center",
-            borderColor: "var(--danger)",
-            boxShadow: "0 0 30px rgba(255,66,66,0.35)",
-          }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.3, ease: EASE }}
         >
-          <p className="eyebrow" style={{ color: "var(--danger)" }}>
-            The forfeit
-          </p>
-          <p className="display" style={{ fontSize: 20, margin: "8px 0", color: "var(--cream)" }}>
-            {room.forfeitText}
-          </p>
-          <p className="muted">
-            Owed by {losers.map((l) => l.displayName).join(" and ")}
-          </p>
+          <div
+            className="slip"
+            style={{ padding: "14px 16px", textAlign: "center", position: "relative" }}
+          >
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.16em",
+                color: "var(--ink-soft)",
+              }}
+            >
+              SETTLEMENT SLIP
+            </p>
+            <hr className="slip-rule" />
+            <p className="display" style={{ fontSize: 22, margin: "6px 0", color: "var(--ink)" }}>
+              {room.forfeitText}
+            </p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-soft)" }}>
+              OWED BY {losers.map((l) => l.displayName.toUpperCase()).join(" AND ")}
+            </p>
+            {/* the stamp comes down */}
+            <motion.span
+              initial={{ scale: 2, opacity: 0, rotate: 4 }}
+              animate={{ scale: 1, opacity: 1, rotate: -8 }}
+              transition={{ delay: 0.75, duration: 0.22, ease: EASE }}
+              className="stamp"
+              aria-hidden
+              style={{
+                position: "absolute",
+                right: 10,
+                top: 8,
+                fontSize: 18,
+                color: "var(--stamp)",
+              }}
+            >
+              Settle up
+            </motion.span>
+          </div>
+          <div className="slip-tear" />
         </motion.section>
       )}
 
@@ -148,7 +169,7 @@ export function FullTimeScreen({
       {!forfeitRoom && (
         <section className="card" style={{ textAlign: "center" }}>
           <p className="eyebrow">The pot</p>
-          <p className="display" style={{ fontSize: 30, color: "var(--lime)" }}>
+          <p className="display tnum" style={{ fontSize: 34, color: "var(--amber)" }}>
             ${(potCents(bundle) / 100).toFixed(0)}
           </p>
           <p className="muted" style={{ fontSize: 12 }}>

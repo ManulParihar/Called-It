@@ -1,7 +1,7 @@
 "use client";
 
-// The green room before kickoff. Share the code, watch the crew lock in
-// their calls, count down to the whistle.
+// The turnstiles before kickoff. Share the ticket, watch the crew hand in
+// their slips, count down to the whistle.
 
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -10,6 +10,8 @@ import { hasAnswered, potCents } from "@/lib/live";
 import { MascotAvatar } from "./MascotAvatar";
 import { Countdown } from "./Countdown";
 import { Referee } from "./Referee";
+
+const EASE = [0.23, 1, 0.32, 1] as const;
 
 export function WaitingScreen({
   bundle,
@@ -45,57 +47,89 @@ export function WaitingScreen({
   }
 
   const refereeLine = everyoneIn
-    ? "Everyone is locked in. Nothing to do now but sweat."
+    ? "All slips in. Nothing left now but the sweat."
     : waitingOn.some((m) => m.id === me.id)
-      ? "You still owe me five calls, friend!"
-      : `Still waiting on ${waitingOn.map((m) => m.displayName).join(", ")}.`;
+      ? "You've not filled your slip yet, friend."
+      : `Waiting on ${waitingOn.map((m) => m.displayName).join(", ")}. Chase them up.`;
 
   return (
     <main style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
       <header style={{ textAlign: "center", paddingTop: 8 }}>
         <p className="eyebrow">{room.fixture.competition}</p>
-        <h1 style={{ fontSize: 22 }}>
-          {room.fixture.homeTeam}{" "}
-          <span style={{ color: "var(--tangerine)" }}>vs</span>{" "}
+        <h1 style={{ fontSize: 24 }}>
+          {room.fixture.homeTeam} <span style={{ color: "var(--amber)" }}>v</span>{" "}
           {room.fixture.awayTeam}
         </h1>
       </header>
 
-      <section className="card poster-stripes" style={{ textAlign: "center" }}>
-        <p className="eyebrow">Calls lock in</p>
+      <section className="card" style={{ textAlign: "center" }}>
+        <p className="eyebrow">Slips lock in</p>
         <Countdown to={room.lockAt} />
         {room.wagerType === "money" ? (
-          <p style={{ fontWeight: 700, marginTop: 6 }}>
-            <span style={{ color: "var(--lime)" }}>
-              ${(pot / 100).toFixed(0)} pot
-            </span>{" "}
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              fontSize: 13,
+              marginTop: 6,
+            }}
+          >
+            <span style={{ color: "var(--amber)" }}>${(pot / 100).toFixed(0)} POT</span>{" "}
             <span className="muted">· ${room.stakeUsd} a head</span>
           </p>
         ) : (
-          <p style={{ fontWeight: 700, marginTop: 6, color: "var(--tangerine)" }}>
-            Loser: {room.forfeitText}
+          <p
+            style={{
+              fontWeight: 700,
+              marginTop: 6,
+              color: "var(--stamp-bright)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+            }}
+          >
+            AT STAKE: {room.forfeitText}
           </p>
         )}
       </section>
 
-      <section
-        className="card"
-        style={{ display: "flex", alignItems: "center", gap: 12 }}
+      {/* the ticket stub for the door */}
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: EASE }}
       >
-        <div style={{ flex: 1 }}>
-          <p className="eyebrow">Room code</p>
-          <p className="room-code" style={{ fontSize: 26, textAlign: "left" }}>
-            {room.code}
-          </p>
+        <div
+          className="slip"
+          style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}
+        >
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.16em",
+                color: "var(--ink-soft)",
+              }}
+            >
+              ADMIT YOUR CREW · ROOM
+            </p>
+            <p
+              className="room-code"
+              style={{ fontSize: 26, textAlign: "left", color: "var(--ink)" }}
+            >
+              {room.code}
+            </p>
+          </div>
+          <button className="btn btn-small" onClick={share}>
+            {copied ? "Copied!" : "Invite"}
+          </button>
         </div>
-        <button className="btn btn-small" onClick={share}>
-          {copied ? "Copied!" : "Invite"}
-        </button>
-      </section>
+        <div className="slip-tear" />
+      </motion.section>
 
       <section>
         <p className="eyebrow" style={{ marginBottom: 8 }}>
-          The crew ({bundle.members.length})
+          Through the turnstiles ({bundle.members.length})
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           {bundle.members.map((m, i) => {
@@ -103,9 +137,9 @@ export function WaitingScreen({
             return (
               <motion.div
                 key={m.id}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.05 * i, type: "spring", stiffness: 300, damping: 18 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.04 * i, duration: 0.25, ease: EASE }}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -115,31 +149,30 @@ export function WaitingScreen({
                   position: "relative",
                 }}
               >
-                <div
-                  className={done ? "" : "floaty"}
-                  style={{ opacity: done ? 1 : 0.55 }}
-                >
+                <div style={{ opacity: done ? 1 : 0.5 }}>
                   <MascotAvatar mascotId={m.mascotId} size={54} />
                 </div>
                 {done && (
                   <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="display"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", duration: 0.35, bounce: 0.4 }}
                     style={{
                       position: "absolute",
                       top: -4,
                       right: 2,
-                      background: "var(--lime)",
-                      color: "var(--night)",
+                      background: "var(--grass)",
+                      color: "var(--ink)",
                       borderRadius: "50%",
                       width: 20,
                       height: 20,
-                      fontSize: 13,
+                      fontSize: 12,
+                      fontWeight: 700,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
+                    aria-label="slip in"
                   >
                     ✓
                   </motion.span>

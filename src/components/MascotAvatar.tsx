@@ -1,148 +1,197 @@
 "use client";
 
-// The eight masked fighters, drawn as inline SVG so they scale anywhere and
-// need no image files. Every mascot shares the same lucha mask base and gets
-// its own colours and animal features on top.
+// The eight club crests. Football clubs are literally nicknamed after animals
+// — the Foxes, the Owls, the Rams — so each player picks a club badge, drawn
+// as inline SVG. Every crest gets its own shape, kit colour and mark so they
+// stay tellable-apart at leaderboard size (38px).
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
+import { MASCOTS } from "@/lib/mascots";
 
-interface MaskStyle {
-  base: string; // mask colour
-  trim: string; // forehead diamond and stitching
-  skin: string; // muzzle showing through the mouth hole
-  features?: ReactNode; // ears, horns, fins drawn behind the head
-  extras?: ReactNode; // details drawn on top of the mask
+const CHALK = "#f2f4ec";
+const INK = "#17150f";
+const KEYLINE = "rgba(242,244,236,0.35)";
+
+const SHIELD = "M50 5 L86 14 C86 48 74 78 50 95 C26 78 14 48 14 14 Z";
+
+interface Crest {
+  shape: "shield" | "circle";
+  field: string; // kit colour
+  rim: string; // darker edge
+  striped?: boolean; // chalk stripes on the field
+  mark: ReactNode; // the animal, flat and chunky
 }
 
-const STYLES: Record<string, MaskStyle> = {
+const CRESTS: Record<string, Crest> = {
   fox: {
-    base: "#ff8c1a",
-    trim: "#ffcf3f",
-    skin: "#ffe9c9",
-    features: (
+    shape: "shield",
+    field: "#e87f1a",
+    rim: "#9e5410",
+    mark: (
       <>
-        {/* pointed ears */}
-        <path d="M22 34 L14 8 L38 22 Z" fill="#ff8c1a" stroke="#c95f00" strokeWidth="2" />
-        <path d="M78 34 L86 8 L62 22 Z" fill="#ff8c1a" stroke="#c95f00" strokeWidth="2" />
-        <path d="M22 28 L18 14 L32 22 Z" fill="#ffe9c9" />
-        <path d="M78 28 L82 14 L68 22 Z" fill="#ffe9c9" />
+        {/* fox mask: ears, face, snout tip */}
+        <path
+          d="M30 32 L37 15 L46 28 L54 28 L63 15 L70 32 L50 64 Z"
+          fill={CHALK}
+        />
+        <circle cx="42" cy="37" r="3" fill={INK} />
+        <circle cx="58" cy="37" r="3" fill={INK} />
+        <path d="M46 52 L54 52 L50 60 Z" fill={INK} />
       </>
     ),
   },
   bull: {
-    base: "#b52b3d",
-    trim: "#ffcf3f",
-    skin: "#e8a68b",
-    features: (
+    shape: "circle",
+    field: "#b3261e",
+    rim: "#711512",
+    mark: (
       <>
-        {/* curved horns */}
-        <path d="M24 30 C6 26 4 12 12 6 C12 18 20 22 30 22 Z" fill="#fff3e2" stroke="#c9b8a0" strokeWidth="2" />
-        <path d="M76 30 C94 26 96 12 88 6 C88 18 80 22 70 22 Z" fill="#fff3e2" stroke="#c9b8a0" strokeWidth="2" />
+        {/* horns swept up and out, long face below */}
+        <path d="M39 33 C27 33 16 24 16 11 C24 20 33 23 42 24 Z" fill={CHALK} />
+        <path d="M61 33 C73 33 84 24 84 11 C76 20 67 23 58 24 Z" fill={CHALK} />
+        <path
+          d="M50 24 C61 24 67 35 66 48 C65 61 58 71 50 71 C42 71 35 61 34 48 C33 35 39 24 50 24 Z"
+          fill={CHALK}
+        />
+        <circle cx="43.5" cy="41" r="2.8" fill="#b3261e" />
+        <circle cx="56.5" cy="41" r="2.8" fill="#b3261e" />
+        <circle cx="45.5" cy="61" r="2.2" fill="#b3261e" />
+        <circle cx="54.5" cy="61" r="2.2" fill="#b3261e" />
       </>
-    ),
-    extras: (
-      // nose ring
-      <circle cx="50" cy="83" r="6" fill="none" stroke="#ffcf3f" strokeWidth="3" />
     ),
   },
   owl: {
-    base: "#6b3fa0",
-    trim: "#c8f527",
-    skin: "#d9c4f2",
-    features: (
+    shape: "shield",
+    field: "#24487e",
+    rim: "#16294a",
+    striped: true,
+    mark: (
       <>
-        {/* feather tufts */}
-        <path d="M26 26 L18 6 L40 16 Z" fill="#6b3fa0" stroke="#4a2a73" strokeWidth="2" />
-        <path d="M74 26 L82 6 L60 16 Z" fill="#6b3fa0" stroke="#4a2a73" strokeWidth="2" />
+        {/* tufts, two big round eyes, a beak */}
+        <path d="M28 33 L33 18 L41 29 Z" fill={CHALK} />
+        <path d="M72 33 L67 18 L59 29 Z" fill={CHALK} />
+        <circle cx="38" cy="42" r="11" fill={CHALK} />
+        <circle cx="62" cy="42" r="11" fill={CHALK} />
+        <circle cx="38" cy="42" r="4.5" fill={INK} />
+        <circle cx="62" cy="42" r="4.5" fill={INK} />
+        <path d="M44 56 L56 56 L50 67 Z" fill="#ffb520" />
       </>
-    ),
-    extras: (
-      // small beak over the mouth
-      <path d="M44 74 L56 74 L50 86 Z" fill="#ffcf3f" stroke="#c95f00" strokeWidth="2" />
     ),
   },
   shark: {
-    base: "#3f7fe8",
-    trim: "#fff3e2",
-    skin: "#cfe4ff",
-    features: (
-      // dorsal fin
-      <path d="M50 2 C62 8 64 20 58 28 L42 28 C38 16 42 8 50 2 Z" fill="#3f7fe8" stroke="#215bb8" strokeWidth="2" />
-    ),
-    extras: (
-      // teeth
-      <path d="M38 80 l4 5 4 -5 4 5 4 -5 4 5 4 -5" fill="none" stroke="#fff3e2" strokeWidth="3" strokeLinejoin="round" />
+    shape: "circle",
+    field: "#1c5f7a",
+    rim: "#103a4c",
+    mark: (
+      <>
+        {/* the fin breaking the water */}
+        <path d="M40 56 C41 37 50 24 64 20 C57 33 57 47 59 56 Z" fill={CHALK} />
+        <path
+          d="M24 65 Q30 58 36 65 T48 65 T60 65 T72 65"
+          fill="none"
+          stroke={CHALK}
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+      </>
     ),
   },
   ram: {
-    base: "#e8dcc4",
-    trim: "#ff2e88",
-    skin: "#f7efe0",
-    features: (
+    shape: "shield",
+    field: "#e9e2cf",
+    rim: "#9c8f68",
+    mark: (
       <>
-        {/* curled horns */}
-        <path d="M30 30 C10 30 8 12 20 8 C16 18 24 24 34 20 Z" fill="#d9a53f" stroke="#a8781f" strokeWidth="2" />
-        <path d="M70 30 C90 30 92 12 80 8 C84 18 76 24 66 20 Z" fill="#d9a53f" stroke="#a8781f" strokeWidth="2" />
-        <circle cx="19" cy="19" r="7" fill="#d9a53f" stroke="#a8781f" strokeWidth="2" />
-        <circle cx="81" cy="19" r="7" fill="#d9a53f" stroke="#a8781f" strokeWidth="2" />
+        {/* curled horns flanking a narrow face */}
+        <path
+          d="M46 33 C34 20 17 27 19 42 C20 52 31 55 36 47 C39 42 36 36 31 37"
+          fill="none"
+          stroke="#4a3c22"
+          strokeWidth="6.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M54 33 C66 20 83 27 81 42 C80 52 69 55 64 47 C61 42 64 36 69 37"
+          fill="none"
+          stroke="#4a3c22"
+          strokeWidth="6.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M44 31 C44 25 56 25 56 31 L54 57 C52 62 48 62 46 57 Z"
+          fill="#4a3c22"
+        />
+        <circle cx="47" cy="38" r="1.9" fill="#e9e2cf" />
+        <circle cx="53" cy="38" r="1.9" fill="#e9e2cf" />
       </>
     ),
   },
   cobra: {
-    base: "#2f9e44",
-    trim: "#c8f527",
-    skin: "#bfe8c5",
-    features: (
-      // hood flares
-      <path d="M50 4 C20 8 8 34 14 58 L28 46 L28 22 L72 22 L72 46 L86 58 C92 34 80 8 50 4 Z" fill="#2f9e44" stroke="#1d6b2c" strokeWidth="2" />
-    ),
-    extras: (
-      // forked tongue
-      <path d="M50 88 v6 m0 0 l-4 5 m4 -5 l4 5" fill="none" stroke="#ff4242" strokeWidth="3" strokeLinecap="round" />
+    shape: "circle",
+    field: "#1e7a43",
+    rim: "#124a28",
+    mark: (
+      <>
+        {/* the flared hood, tapering to the body at the bottom */}
+        <path
+          d="M50 11 C69 15 79 32 75 50 C72 61 63 68 54 70 L50 62 L46 70 C37 68 28 61 25 50 C21 32 31 15 50 11 Z"
+          fill={CHALK}
+        />
+        {/* narrowed eyes and a forked tongue */}
+        <path d="M36 30 L47 34 L36 37 Z" fill="#1e7a43" />
+        <path d="M64 30 L53 34 L64 37 Z" fill="#1e7a43" />
+        <path
+          d="M50 44 L50 54 M50 54 L45 60 M50 54 L55 60"
+          fill="none"
+          stroke="#d7301f"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      </>
     ),
   },
   panther: {
-    base: "#2b2140",
-    trim: "#ff2e88",
-    skin: "#8f7fb0",
-    features: (
+    shape: "shield",
+    field: "#1b1913",
+    rim: "#3a3527",
+    mark: (
       <>
-        {/* round ears */}
-        <circle cx="26" cy="20" r="12" fill="#2b2140" stroke="#171026" strokeWidth="2" />
-        <circle cx="74" cy="20" r="12" fill="#2b2140" stroke="#171026" strokeWidth="2" />
-        <circle cx="26" cy="20" r="5" fill="#ff2e88" />
-        <circle cx="74" cy="20" r="5" fill="#ff2e88" />
-      </>
-    ),
-    extras: (
-      // whisker dots
-      <>
-        <circle cx="41" cy="80" r="1.8" fill="#171026" />
-        <circle cx="50" cy="82" r="1.8" fill="#171026" />
-        <circle cx="59" cy="80" r="1.8" fill="#171026" />
+        {/* amber cat, ears up, eyes narrowed */}
+        <path d="M36 36 L39 21 L48 31 Z" fill="#ffb520" />
+        <path d="M64 36 L61 21 L52 31 Z" fill="#ffb520" />
+        <circle cx="50" cy="44" r="15" fill="#ffb520" />
+        <ellipse cx="44" cy="42" rx="3" ry="4.2" fill="#1b1913" />
+        <ellipse cx="56" cy="42" rx="3" ry="4.2" fill="#1b1913" />
+        <path d="M46 51 L54 51 L50 56 Z" fill="#1b1913" />
       </>
     ),
   },
   eagle: {
-    base: "#c9a227",
-    trim: "#fff3e2",
-    skin: "#f2e3b8",
-    features: (
-      // head feathers
-      <path d="M30 22 L24 4 L40 14 L44 2 L52 14 L62 4 L70 22 Z" fill="#c9a227" stroke="#8f6f12" strokeWidth="2" />
-    ),
-    extras: (
-      // hooked beak
-      <path d="M42 72 L58 72 C60 80 56 88 50 90 C46 86 42 80 42 72 Z" fill="#ff8c1a" stroke="#c95f00" strokeWidth="2" />
+    shape: "circle",
+    field: "#d9a62e",
+    rim: "#8f6c14",
+    mark: (
+      <>
+        {/* broad solid wings, head and tail */}
+        <path d="M48 40 L13 27 C17 43 29 54 46 55 Z" fill={INK} />
+        <path d="M52 40 L87 27 C83 43 71 54 54 55 Z" fill={INK} />
+        <path d="M50 32 L57 50 L50 74 L43 50 Z" fill={INK} />
+        <circle cx="50" cy="28" r="6.5" fill={INK} />
+        <path d="M55 25 L62 28 L55 31 Z" fill={INK} />
+        <path d="M43 66 L50 79 L57 66 Z" fill={INK} />
+      </>
     ),
   },
 };
 
-const FALLBACK: MaskStyle = {
-  base: "#ff2e88",
-  trim: "#ffcf3f",
-  skin: "#ffd9e8",
+const FALLBACK: Crest = {
+  shape: "shield",
+  field: "#57523f",
+  rim: "#3a3527",
+  mark: <circle cx="50" cy="44" r="14" fill={CHALK} />,
 };
+
+const NAMES = new Map(MASCOTS.map((m) => [m.id, m.name]));
 
 export function MascotAvatar({
   mascotId,
@@ -153,8 +202,9 @@ export function MascotAvatar({
   size?: number;
   className?: string;
 }) {
-  const s = STYLES[mascotId] ?? FALLBACK;
-  const darker = "rgba(0,0,0,0.28)";
+  const uid = useId();
+  const crest = CRESTS[mascotId] ?? FALLBACK;
+  const clipId = `crest-${uid}`;
 
   return (
     <svg
@@ -163,41 +213,57 @@ export function MascotAvatar({
       height={size}
       className={className}
       role="img"
-      aria-label={mascotId}
+      aria-label={NAMES.get(mascotId) ?? mascotId}
     >
-      {s.features}
-      {/* head with the mask pulled over it */}
-      <path
-        d="M50 10 C26 10 16 26 16 46 C16 72 32 92 50 96 C68 92 84 72 84 46 C84 26 74 10 50 10 Z"
-        fill={s.base}
-        stroke={darker}
-        strokeWidth="3"
-      />
-      {/* forehead diamond, the classic lucha panel */}
-      <path d="M50 16 L62 34 L50 52 L38 34 Z" fill={s.trim} opacity="0.95" />
-      {/* stitch line down the middle */}
-      <path
-        d="M50 52 L50 68"
-        stroke={darker}
-        strokeWidth="2"
-        strokeDasharray="3 4"
-      />
-      {/* eye holes */}
-      <path d="M24 50 C26 40 38 40 42 48 C42 56 30 60 24 50 Z" fill="#180a26" />
-      <path d="M76 50 C74 40 62 40 58 48 C58 56 70 60 76 50 Z" fill="#180a26" />
-      <circle cx="33" cy="49" r="4" fill="#fff3e2" />
-      <circle cx="67" cy="49" r="4" fill="#fff3e2" />
-      <circle cx="34.5" cy="48" r="1.6" fill="#180a26" />
-      <circle cx="65.5" cy="48" r="1.6" fill="#180a26" />
-      {/* mouth opening showing the animal underneath */}
-      <path
-        d="M36 72 C36 64 64 64 64 72 C64 82 56 88 50 88 C44 88 36 82 36 72 Z"
-        fill={s.skin}
-        stroke={darker}
-        strokeWidth="2.5"
-      />
-      <path d="M43 76 C46 80 54 80 57 76" fill="none" stroke="#180a26" strokeWidth="2.5" strokeLinecap="round" />
-      {s.extras}
+      {crest.shape === "shield" ? (
+        <>
+          <clipPath id={clipId}>
+            <path d={SHIELD} />
+          </clipPath>
+          <path d={SHIELD} fill={crest.field} />
+          {crest.striped && (
+            <g clipPath={`url(#${clipId})`} fill="rgba(242,244,236,0.16)">
+              <rect x="26" y="0" width="10" height="100" />
+              <rect x="45" y="0" width="10" height="100" />
+              <rect x="64" y="0" width="10" height="100" />
+            </g>
+          )}
+          <path
+            d={SHIELD}
+            fill="none"
+            stroke={crest.rim}
+            strokeWidth="4"
+          />
+          <path
+            d={SHIELD}
+            fill="none"
+            stroke={KEYLINE}
+            strokeWidth="1.5"
+            transform="translate(50 50) scale(0.88) translate(-50 -50)"
+          />
+        </>
+      ) : (
+        <>
+          <circle cx="50" cy="50" r="45" fill={crest.field} />
+          {crest.striped && (
+            <g fill="rgba(242,244,236,0.16)">
+              <rect x="26" y="8" width="10" height="84" />
+              <rect x="45" y="5" width="10" height="90" />
+              <rect x="64" y="8" width="10" height="84" />
+            </g>
+          )}
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke={crest.rim}
+            strokeWidth="4"
+          />
+          <circle cx="50" cy="50" r="39" fill="none" stroke={KEYLINE} strokeWidth="1.5" />
+        </>
+      )}
+      {crest.mark}
     </svg>
   );
 }

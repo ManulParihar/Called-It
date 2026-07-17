@@ -8,14 +8,14 @@ export interface Mascot {
 }
 
 export const MASCOTS: Mascot[] = [
-  { id: "fox", name: "The Fox" },
-  { id: "bull", name: "The Bull" },
-  { id: "owl", name: "The Owl" },
-  { id: "shark", name: "The Shark" },
-  { id: "ram", name: "The Ram" },
-  { id: "cobra", name: "The Cobra" },
-  { id: "panther", name: "The Panther" },
-  { id: "eagle", name: "The Eagle" },
+  { id: "fox", name: "The Foxes" },
+  { id: "bull", name: "The Bulls" },
+  { id: "owl", name: "The Owls" },
+  { id: "shark", name: "The Sharks" },
+  { id: "ram", name: "The Rams" },
+  { id: "cobra", name: "The Cobras" },
+  { id: "panther", name: "The Panthers" },
+  { id: "eagle", name: "The Eagles" },
 ];
 
 export const MASCOT_IDS = MASCOTS.map((m) => m.id);

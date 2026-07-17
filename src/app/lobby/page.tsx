@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { MASCOTS } from "@/lib/mascots";
 import { MascotAvatar } from "@/components/MascotAvatar";
 import { useProfile } from "@/hooks/useProfile";
+
+const EASE = [0.23, 1, 0.32, 1] as const;
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -20,6 +23,7 @@ export default function LobbyPage() {
 
   if (!ready || !profile) return null;
 
+  const club = MASCOTS.find((m) => m.id === profile.mascotId);
   const cleanCode = code.trim().toUpperCase();
 
   function goJoin() {
@@ -28,48 +32,39 @@ export default function LobbyPage() {
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          paddingTop: 12,
-        }}
+    <main style={{ display: "flex", flexDirection: "column", gap: 18, flex: 1 }}>
+      <motion.header
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: EASE }}
+        style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 12 }}
       >
-        <motion.div
-          className="floaty"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 18 }}
-        >
-          <MascotAvatar mascotId={profile.mascotId} size={72} />
-        </motion.div>
+        <MascotAvatar mascotId={profile.mascotId} size={64} />
         <div style={{ flex: 1 }}>
-          <p className="eyebrow">In the ring tonight</p>
-          <h1 style={{ fontSize: 24, color: "var(--cream)" }}>{profile.displayName}</h1>
+          <p className="eyebrow">{club?.name ?? "In the stands"}</p>
+          <h1 style={{ fontSize: 26, color: "var(--chalk)" }}>{profile.displayName}</h1>
         </div>
         <Link
           href="/#edit"
           className="muted"
-          style={{ fontSize: 12, textDecoration: "underline" }}
+          style={{ fontSize: 12, textDecoration: "underline", padding: 12 }}
         >
           switch
         </Link>
-      </header>
+      </motion.header>
 
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="card poster-stripes"
-        style={{ textAlign: "center", padding: "28px 16px" }}
+        transition={{ duration: 0.3, ease: EASE, delay: 0.06 }}
+        className="card"
+        style={{ textAlign: "center", padding: "26px 16px" }}
       >
-        <h2 style={{ fontSize: 20, marginBottom: 6 }}>
-          <span style={{ color: "var(--magenta)" }}>Start</span> a match room
+        <h2 style={{ fontSize: 22, marginBottom: 6 }}>
+          Open a <span style={{ color: "var(--amber)" }}>room</span>
         </h2>
         <p className="muted" style={{ marginBottom: 16 }}>
-          Pick the fixture, set the stakes, invite the crew.
+          Pick the match, set the stakes, invite the crew.
         </p>
         <Link href="/create" className="btn" style={{ textDecoration: "none" }}>
           Create a room
@@ -77,14 +72,14 @@ export default function LobbyPage() {
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ duration: 0.3, ease: EASE, delay: 0.12 }}
         className="card"
         style={{ display: "flex", flexDirection: "column", gap: 12 }}
       >
-        <h2 style={{ fontSize: 20, textAlign: "center" }}>
-          <span style={{ color: "var(--lime)" }}>Join</span> your crew
+        <h2 style={{ fontSize: 22, textAlign: "center" }}>
+          Join your <span style={{ color: "var(--grass)" }}>crew</span>
         </h2>
         <input
           className="field"
@@ -95,14 +90,17 @@ export default function LobbyPage() {
           maxLength={12}
           autoComplete="off"
           autoCapitalize="characters"
+          spellCheck={false}
+          aria-label="Room code"
           style={{
             textAlign: "center",
-            fontFamily: "var(--font-display)",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 700,
             letterSpacing: "0.3em",
             fontSize: 20,
           }}
         />
-        <button className="btn btn-lime" disabled={!cleanCode} onClick={goJoin}>
+        <button className="btn btn-ghost" disabled={!cleanCode} onClick={goJoin}>
           Find the room
         </button>
       </motion.section>

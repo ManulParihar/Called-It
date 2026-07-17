@@ -1,7 +1,7 @@
 "use client";
 
-// Sign in: pick a name and a fighter. The device id is created here and kept
-// in local storage. Returning players skip straight to the lobby.
+// Sign in: pick a club and put a name on your slip. The device id is created
+// here and kept in local storage. Returning players skip straight to the lobby.
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,8 @@ import { useAppWallet } from "@/lib/wallet/WalletProvider";
 function safeNext(value: string | null): string {
   return value && value.startsWith("/") ? value : "/lobby";
 }
+
+const EASE = [0.23, 1, 0.32, 1] as const;
 
 export default function SignInPage() {
   const router = useRouter();
@@ -56,6 +58,7 @@ export default function SignInPage() {
   if (!ready || (profile && !editing)) return null;
 
   const canEnter = name.trim().length > 0 && mascotId !== null;
+  const club = MASCOTS.find((m) => m.id === mascotId) ?? null;
 
   async function enter() {
     if (!canEnter || !mascotId || busy) return;
@@ -74,29 +77,29 @@ export default function SignInPage() {
   }
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", gap: 20, flex: 1 }}>
+    <main style={{ display: "flex", flexDirection: "column", gap: 22, flex: 1 }}>
       <motion.header
-        initial={{ opacity: 0, y: -16 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ textAlign: "center", paddingTop: 24 }}
+        transition={{ duration: 0.3, ease: EASE }}
+        style={{ textAlign: "center", paddingTop: 20 }}
       >
-        <p className="eyebrow">Tonight at the arena</p>
-        <h1 style={{ fontSize: 44, lineHeight: 1 }}>
-          <span style={{ color: "var(--magenta)" }}>Called</span>{" "}
-          <span style={{ color: "var(--lime)" }}>It</span>
+        <p className="eyebrow">Match night</p>
+        <h1 style={{ fontSize: 52, lineHeight: 1, color: "var(--chalk)" }}>
+          Called <span style={{ color: "var(--amber)" }}>It</span>
         </h1>
-        <div className="marquee" style={{ marginTop: 8 }}>
-          <span className="marquee-inner muted" style={{ fontSize: 13 }}>
-            Call the match with your crew. Winner takes the glory. Loser takes the
-            forfeit. &nbsp;•&nbsp; Call the match with your crew. Winner takes the
-            glory. Loser takes the forfeit. &nbsp;•&nbsp;
-          </span>
-        </div>
+        <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
+          Five calls each. The match decides. Somebody pays.
+        </p>
       </motion.header>
 
-      <section>
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: EASE, delay: 0.06 }}
+      >
         <p className="eyebrow" style={{ marginBottom: 8 }}>
-          Pick your fighter
+          Pick your club
         </p>
         <div
           style={{
@@ -110,37 +113,32 @@ export default function SignInPage() {
             return (
               <motion.button
                 key={m.id}
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.05 * i, type: "spring", stiffness: 300, damping: 20 }}
-                whileTap={{ scale: 0.92 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 + 0.04 * i, duration: 0.25, ease: EASE }}
+                whileTap={{ scale: 0.94 }}
                 onClick={() => setMascotId(m.id)}
                 aria-pressed={on}
                 style={{
-                  background: on ? "var(--night-3)" : "var(--night-2)",
-                  border: `2px solid ${on ? "var(--lime)" : "rgba(255,243,226,0.08)"}`,
+                  background: on ? "var(--pitch-3)" : "var(--pitch-2)",
+                  border: `1px solid ${on ? "var(--amber)" : "var(--chalk-line)"}`,
                   borderRadius: "var(--radius-sm)",
-                  padding: "10px 4px 6px",
+                  padding: "10px 4px 7px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 4,
-                  boxShadow: on ? "0 0 18px rgba(200,245,39,0.35)" : "none",
+                  gap: 5,
+                  minHeight: 92,
                 }}
               >
-                <motion.div
-                  animate={on ? { rotate: [0, -8, 8, 0], scale: [1, 1.15, 1] } : {}}
-                  transition={{ duration: 0.4 }}
-                >
-                  <MascotAvatar mascotId={m.id} size={56} />
-                </motion.div>
+                <MascotAvatar mascotId={m.id} size={54} />
                 <span
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    color: on ? "var(--lime)" : "var(--cream-dim)",
+                    color: on ? "var(--amber)" : "var(--chalk-dim)",
                   }}
                 >
                   {m.name.replace("The ", "")}
@@ -149,28 +147,72 @@ export default function SignInPage() {
             );
           })}
         </div>
-      </section>
+      </motion.section>
 
-      <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <p className="eyebrow">Your ring name</p>
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: EASE, delay: 0.12 }}
+        style={{ display: "flex", flexDirection: "column", gap: 8 }}
+      >
+        <label className="eyebrow" htmlFor="slip-name">
+          Name on the slip
+        </label>
         <input
+          id="slip-name"
           className="field"
+          style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && enter()}
-          placeholder="El Magnifico"
+          placeholder="The Gaffer"
           maxLength={24}
           autoComplete="off"
+          spellCheck={false}
         />
-      </section>
+      </motion.section>
+
+      {/* your member stub, printing itself as you type */}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: EASE, delay: 0.18 }}
+        aria-hidden
+      >
+        <div className="slip" style={{ padding: "12px 14px", fontSize: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              letterSpacing: "0.12em",
+              color: "var(--ink-soft)",
+              fontWeight: 700,
+            }}
+          >
+            <span>CALLED IT</span>
+            <span>MEMBER STUB</span>
+          </div>
+          <hr className="slip-rule" />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+              <p style={{ fontWeight: 700, fontSize: 14 }}>
+                CLUB&nbsp;&nbsp;{club ? club.name.toUpperCase() : "—"}
+              </p>
+              <p style={{ fontWeight: 700, fontSize: 14 }}>
+                NAME&nbsp;&nbsp;{name.trim() ? name.trim().toUpperCase() : "—"}
+              </p>
+            </div>
+            {club && <MascotAvatar mascotId={club.id} size={44} />}
+          </div>
+        </div>
+        <div className="slip-tear" />
+      </motion.section>
 
       <div style={{ marginTop: "auto" }}>
         {error && <p className="error-line" style={{ marginBottom: 8 }}>{error}</p>}
-        <motion.div whileTap={canEnter && !busy ? { scale: 0.97 } : {}}>
-          <button className="btn btn-lime" disabled={!canEnter || busy} onClick={enter}>
-            {busy ? "Setting up your wallet…" : "Step into the ring"}
-          </button>
-        </motion.div>
+        <button className="btn" disabled={!canEnter || busy} onClick={enter}>
+          {busy ? "Sorting your wallet…" : "Get my slip"}
+        </button>
       </div>
     </main>
   );

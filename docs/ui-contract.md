@@ -70,9 +70,21 @@ moments to make loud are goals, red cards, and penalties.
 
 - It is a mobile game, so it should feel animated and alive, with characters and
   strong colour, not a plain form app.
-- Art direction is a lucha arcade: masked animal characters and a host referee
-  who reacts to the match and reads out the loser's forfeit at the end.
-- Do not use generic corporate colours. Pick a bold, unexpected palette.
+- Art direction is "match night at the ground": the floodlit pitch at night as
+  the dark green ground of every screen, paper betting slips for anything that
+  is a call or a settlement, rubber stamps for outcomes, scoreboard amber for
+  money and score. Tokens live in `src/app/globals.css` — every colour is named
+  by its source (pitch, chalk, paper, ink, amber, grass, stamp).
+- Type: Anton for back-page headlines, Courier Prime for anything printed on a
+  slip, Archivo for readable body text.
+- Characters are club crests (football clubs really are nicknamed the Foxes,
+  the Owls, the Rams…), drawn as inline SVG badges in `MascotAvatar`. The eight
+  mascot ids are stable keys; only the art and the `name` field changed.
+- The host is the bookie (`Referee` component keeps its name and props): he
+  takes the slips, calls the action, and reads out who pays at full time.
+- The signature element is the live-stamped bet slip: your five calls print on
+  paper, get stamped ✓/✗ as the match resolves them, and the loser's forfeit
+  arrives as a settlement slip stamped "SETTLE UP".
 - Sounds and read aloud voice come later, so leave room for them but do not block
   on them.
 

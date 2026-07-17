@@ -72,17 +72,36 @@ export default function RoomPage({ params }: { params: { code: string } }) {
         <main style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center" }}>
           <Referee
             mood="neutral"
-            line="Match is off. Stakes go back where they came from. Nobody wins, nobody dances."
+            line="Match is off. Stakes go back to every pocket. Nobody wins, nobody pays."
           />
-          <div className="card" style={{ textAlign: "center" }}>
-            <p className="display" style={{ fontSize: 20 }}>
-              Match voided
-            </p>
-            <p className="muted" style={{ marginTop: 6 }}>
-              {bundle.room.wagerType === "money"
-                ? "All stakes are refunded."
-                : "The forfeit is cancelled."}
-            </p>
+          <div>
+            <div
+              className="slip"
+              style={{ textAlign: "center", padding: "16px", position: "relative" }}
+            >
+              <p className="display" style={{ fontSize: 20, color: "var(--ink)" }}>
+                Match voided
+              </p>
+              <p style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: "var(--ink-soft)" }}>
+                {bundle.room.wagerType === "money"
+                  ? "ALL STAKES REFUNDED"
+                  : "THE FORFEIT IS CANCELLED"}
+              </p>
+              <span
+                className="stamp"
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: 10,
+                  fontSize: 16,
+                  color: "var(--stamp)",
+                }}
+              >
+                Void
+              </span>
+            </div>
+            <div className="slip-tear" />
           </div>
           <Link href="/lobby" className="btn" style={{ textDecoration: "none" }}>
             Back to the lobby

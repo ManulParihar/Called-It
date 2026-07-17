@@ -1,73 +1,86 @@
 "use client";
 
-// Rico the referee, the masked host of the show. He stands on the live and
-// full time screens, reacts to the match, and reads out the loser's forfeit.
-// Voice comes later; for now his words go in the speech bubble.
+// The bookie. He runs the book for the room: takes the slips, calls the
+// action, and reads out who pays at full time. Voice comes later; for now his
+// words go on a paper chit next to him.
 
 import { motion, AnimatePresence } from "framer-motion";
 
 export type RefereeMood = "neutral" | "hype" | "alarm" | "celebrate";
 
-function RefereeFigure({ mood }: { mood: RefereeMood }) {
-  // Arms change with the mood: down when calm, up for a big moment,
-  // one arm pointing for an alarm.
-  const leftArmUp = mood === "hype" || mood === "celebrate";
-  const rightArmUp = mood === "hype" || mood === "celebrate" || mood === "alarm";
+const SKIN = "#d9a26b";
+const CAP = "#6b5637";
+const CHALK = "#f2f4ec";
+const INK = "#17150f";
+
+function BookieFigure({ mood }: { mood: RefereeMood }) {
+  const leftUp = mood === "celebrate";
+  const rightUp = mood === "hype" || mood === "celebrate" || mood === "alarm";
 
   return (
-    <svg viewBox="0 0 120 130" width="96" height="104" role="img" aria-label="the referee">
-      {/* arms */}
+    <svg viewBox="0 0 120 130" width="92" height="100" role="img" aria-label="the bookie">
+      {/* arms: chalk shirt sleeves */}
       <path
-        d={leftArmUp ? "M38 72 C24 60 18 44 22 32" : "M38 72 C26 80 20 92 22 102"}
+        d={leftUp ? "M42 78 C30 66 24 50 28 36" : "M42 78 C30 86 24 96 26 106"}
         fill="none"
-        stroke="#180a26"
-        strokeWidth="11"
+        stroke={CHALK}
+        strokeWidth="10"
         strokeLinecap="round"
       />
       <path
-        d={rightArmUp ? "M82 72 C96 60 102 44 98 32" : "M82 72 C94 80 100 92 98 102"}
+        d={rightUp ? "M78 78 C90 66 96 50 92 36" : "M78 78 C90 86 96 96 94 106"}
         fill="none"
-        stroke="#180a26"
-        strokeWidth="11"
+        stroke={CHALK}
+        strokeWidth="10"
         strokeLinecap="round"
       />
-      {/* gloves */}
-      <circle cx={leftArmUp ? 22 : 22} cy={leftArmUp ? 30 : 104} r="7" fill="#ff2e88" />
-      <circle cx={rightArmUp ? 98 : 98} cy={rightArmUp ? 30 : 104} r="7" fill="#ff2e88" />
-      {/* striped shirt */}
-      <path d="M38 66 C38 56 82 56 82 66 L86 112 C70 120 50 120 34 112 Z" fill="#fff3e2" />
-      <path d="M44 60 L48 116 M56 58 L58 118 M66 58 L64 118 M76 60 L72 116" stroke="#180a26" strokeWidth="6" />
-      {/* head with a magenta lucha mask */}
-      <path
-        d="M60 6 C44 6 38 18 38 32 C38 48 48 60 60 62 C72 60 82 48 82 32 C82 18 76 6 60 6 Z"
-        fill="#ff2e88"
-        stroke="#180a26"
-        strokeWidth="3"
-      />
-      <path d="M60 10 L68 22 L60 34 L52 22 Z" fill="#ffcf3f" />
-      {/* eyes change with mood */}
+      {/* hands */}
+      <circle cx={leftUp ? 28 : 26} cy={leftUp ? 34 : 108} r="6" fill={SKIN} />
+      <circle cx={rightUp ? 92 : 94} cy={rightUp ? 34 : 108} r="6" fill={SKIN} />
+      {/* a slip waved in the raised hand on the big moments */}
+      {rightUp && (
+        <g transform="rotate(14 98 26)">
+          <rect x="90" y="14" width="18" height="24" rx="1.5" fill="#f4efe2" stroke={INK} strokeWidth="1.5" />
+          <path d="M93 20 h12 M93 25 h12 M93 30 h8" stroke={INK} strokeWidth="1.4" />
+        </g>
+      )}
+      {/* waistcoat over a chalk shirt collar */}
+      <path d="M42 70 C42 62 78 62 78 70 L83 116 C66 124 54 124 37 116 Z" fill={INK} />
+      <path d="M52 66 L60 80 L68 66 C63 62 57 62 52 66 Z" fill={CHALK} />
+      <path d="M47 74 L51 112 M73 74 L69 112" stroke={CHALK} strokeWidth="1.5" opacity="0.35" />
+      {/* head */}
+      <circle cx="60" cy="42" r="22" fill={SKIN} />
+      {/* ears */}
+      <circle cx="38" cy="44" r="4.5" fill={SKIN} />
+      <circle cx="82" cy="44" r="4.5" fill={SKIN} />
+      {/* pencil behind the ear */}
+      <rect x="79" y="30" width="4" height="16" rx="1.5" fill="#ffb520" transform="rotate(18 81 38)" />
+      {/* flat cap */}
+      <path d="M38 36 C38 20 82 20 82 36 C70 30 50 30 38 36 Z" fill={CAP} />
+      <path d="M34 36 C50 28 70 28 86 36 L84 41 C68 34 52 34 36 41 Z" fill={CAP} />
+      {/* glasses */}
+      <circle cx="51" cy="45" r="7" fill="none" stroke={INK} strokeWidth="2.5" />
+      <circle cx="69" cy="45" r="7" fill="none" stroke={INK} strokeWidth="2.5" />
+      <path d="M58 45 L62 45" stroke={INK} strokeWidth="2.5" />
+      {/* eyes change with the mood */}
       {mood === "alarm" ? (
         <>
-          <path d="M46 30 l10 6 M56 30 l-10 6" stroke="#180a26" strokeWidth="3" strokeLinecap="round" />
-          <path d="M74 30 l-10 6 M64 30 l10 6" stroke="#180a26" strokeWidth="3" strokeLinecap="round" />
+          <path d="M48 44 l6 3 M54 44 l-6 3" stroke={INK} strokeWidth="2" strokeLinecap="round" />
+          <path d="M72 44 l-6 3 M66 44 l6 3" stroke={INK} strokeWidth="2" strokeLinecap="round" />
         </>
       ) : (
         <>
-          <ellipse cx="51" cy="33" rx="5" ry={mood === "neutral" ? 5 : 6.5} fill="#fff3e2" />
-          <ellipse cx="69" cy="33" rx="5" ry={mood === "neutral" ? 5 : 6.5} fill="#fff3e2" />
-          <circle cx="51" cy="33" r="2.2" fill="#180a26" />
-          <circle cx="69" cy="33" r="2.2" fill="#180a26" />
+          <circle cx="51" cy="45" r={mood === "neutral" ? 2 : 2.6} fill={INK} />
+          <circle cx="69" cy="45" r={mood === "neutral" ? 2 : 2.6} fill={INK} />
         </>
       )}
-      {/* mouth: open wide on big moments */}
+      {/* moustache and mouth */}
+      <path d="M52 56 C56 53 64 53 68 56 C64 58 56 58 52 56 Z" fill="#57523f" />
       {mood === "neutral" ? (
-        <path d="M53 48 C57 51 63 51 67 48" fill="none" stroke="#180a26" strokeWidth="3" strokeLinecap="round" />
+        <path d="M56 61 C58 63 62 63 64 61" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" />
       ) : (
-        <ellipse cx="60" cy="50" rx="7" ry={mood === "alarm" ? 4 : 6} fill="#180a26" />
+        <ellipse cx="60" cy="62" rx={mood === "alarm" ? 4 : 5.5} ry={mood === "alarm" ? 3 : 4.5} fill={INK} />
       )}
-      {/* whistle on a cord */}
-      <path d="M60 62 L60 74" stroke="#ffcf3f" strokeWidth="2" />
-      <rect x="55" y="72" width="10" height="7" rx="3" fill="#ffcf3f" stroke="#180a26" strokeWidth="2" />
     </svg>
   );
 }
@@ -80,45 +93,34 @@ export function Referee({
   line: string;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 4 }}>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+      {/* one pop when the mood turns, then still — no idle loop */}
       <motion.div
-        animate={
-          mood === "celebrate"
-            ? { y: [0, -14, 0], rotate: [0, -4, 4, 0] }
-            : mood === "hype"
-              ? { y: [0, -8, 0] }
-              : mood === "alarm"
-                ? { x: [0, -4, 4, -4, 0] }
-                : { y: [0, -3, 0] }
-        }
-        transition={{
-          duration: mood === "neutral" ? 2.6 : 0.5,
-          repeat: Infinity,
-          repeatDelay: mood === "neutral" ? 0 : 0.4,
-        }}
+        key={mood}
+        initial={{ scale: 0.95, y: 4 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: "spring", duration: 0.4, bounce: 0.35 }}
         style={{ flexShrink: 0 }}
       >
-        <RefereeFigure mood={mood} />
+        <BookieFigure mood={mood} />
       </motion.div>
       <AnimatePresence mode="wait">
         <motion.div
+          aria-live="polite"
           key={line}
-          initial={{ opacity: 0, scale: 0.8, y: 8 }}
+          initial={{ opacity: 0, scale: 0.96, y: 6 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 400, damping: 24 }}
+          exit={{ opacity: 0, transition: { duration: 0.1 } }}
+          transition={{ type: "spring", duration: 0.35, bounce: 0.2 }}
+          className="slip"
           style={{
-            position: "relative",
-            background: "var(--cream)",
-            color: "var(--night)",
-            borderRadius: 16,
-            borderBottomLeftRadius: 4,
             padding: "10px 14px",
+            fontSize: 13,
             fontWeight: 700,
-            fontSize: 14,
-            lineHeight: 1.3,
-            marginBottom: 24,
-            boxShadow: "0 4px 0 rgba(0,0,0,0.35)",
+            lineHeight: 1.4,
+            marginBottom: 22,
+            transform: "rotate(-0.6deg)",
+            borderRadius: 3,
           }}
         >
           {line}

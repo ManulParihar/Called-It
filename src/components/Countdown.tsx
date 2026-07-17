@@ -27,12 +27,13 @@ export function Countdown({ to }: { to: string }) {
 
   return (
     <span
-      className="display"
       style={{
+        fontFamily: "var(--font-mono)",
+        fontWeight: 700,
         fontSize: 34,
-        color: msLeft < 60_000 ? "var(--danger)" : "var(--gold)",
-        textShadow: "0 0 16px rgba(255,207,63,0.4)",
+        color: msLeft < 60_000 ? "var(--stamp-bright)" : "var(--amber)",
         fontVariantNumeric: "tabular-nums",
+        letterSpacing: "0.06em",
       }}
     >
       {parts(msLeft)}

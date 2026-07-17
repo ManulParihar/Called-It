@@ -129,7 +129,7 @@ export default function CreateRoomPage() {
           <motion.div
             key={label}
             animate={{
-              background: i <= step ? "var(--magenta)" : "var(--night-3)",
+              background: i <= step ? "var(--amber)" : "var(--pitch-3)",
             }}
             style={{ flex: 1, height: 6, borderRadius: 3 }}
           />
@@ -163,16 +163,16 @@ export default function CreateRoomPage() {
                     className="card"
                     style={{
                       textAlign: "left",
-                      borderColor: on ? "var(--magenta)" : undefined,
-                      boxShadow: on ? "0 0 18px rgba(255,46,136,0.35)" : undefined,
+                      borderColor: on ? "var(--amber)" : undefined,
+                      background: on ? "var(--pitch-3)" : undefined,
                     }}
                   >
                     <p className="eyebrow">{f.competition}</p>
                     <p
                       className="display"
-                      style={{ fontSize: 18, margin: "6px 0", color: "var(--cream)" }}
+                      style={{ fontSize: 18, margin: "6px 0", color: "var(--chalk)" }}
                     >
-                      {f.homeTeam} <span style={{ color: "var(--tangerine)" }}>vs</span>{" "}
+                      {f.homeTeam} <span style={{ color: "var(--amber)" }}>v</span>{" "}
                       {f.awayTeam}
                     </p>
                     <p className="muted">Kicks off {kickoffLabel(f.kickoffAt)}</p>
@@ -201,15 +201,15 @@ export default function CreateRoomPage() {
                         display: "flex",
                         alignItems: "center",
                         gap: 12,
-                        borderColor: on ? "var(--lime)" : undefined,
-                        boxShadow: on ? "0 0 18px rgba(200,245,39,0.3)" : undefined,
+                        borderColor: on ? "var(--grass)" : undefined,
+                        background: on ? "var(--pitch-3)" : undefined,
                       }}
                     >
                       <span
                         className="display"
                         style={{
                           fontSize: 22,
-                          color: on ? "var(--lime)" : "var(--cream)",
+                          color: on ? "var(--grass)" : "var(--chalk)",
                         }}
                       >
                         {label}
@@ -228,7 +228,7 @@ export default function CreateRoomPage() {
             <>
               <div className="pill-row">
                 <button
-                  className={`pill ${wagerType === "money" ? "on pill-lime" : ""}`}
+                  className={`pill ${wagerType === "money" ? "on" : ""}`}
                   onClick={() => setWagerType("money")}
                 >
                   Money pot
@@ -321,7 +321,7 @@ export default function CreateRoomPage() {
             Next
           </button>
         ) : (
-          <button className="btn btn-lime" disabled={!stakesOk || busy} onClick={submit}>
+          <button className="btn" disabled={!stakesOk || busy} onClick={submit}>
             {busy ? "Opening the room…" : "Open the room"}
           </button>
         )}

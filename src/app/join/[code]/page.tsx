@@ -100,27 +100,27 @@ export default function JoinPage({ params }: { params: { code: string } }) {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card poster-stripes"
+            className="card"
             style={{ textAlign: "center", padding: "22px 16px" }}
           >
             <p className="eyebrow">{room.fixture.competition}</p>
             <h1 style={{ fontSize: 24, margin: "8px 0" }}>
               {room.fixture.homeTeam}{" "}
-              <span style={{ color: "var(--tangerine)" }}>vs</span>{" "}
+              <span style={{ color: "var(--amber)" }}>v</span>{" "}
               {room.fixture.awayTeam}
             </h1>
             {room.wagerType === "money" ? (
-              <p style={{ fontWeight: 700 }}>
-                <span style={{ color: "var(--lime)" }}>
-                  ${room.stakeUsd} a head
+              <p style={{ fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: 13 }}>
+                <span style={{ color: "var(--amber)" }}>
+                  ${room.stakeUsd} A HEAD
                 </span>{" "}
                 <span className="muted">
                   · pot so far ${(pot / 100).toFixed(0)}
                 </span>
               </p>
             ) : (
-              <p style={{ fontWeight: 700, color: "var(--tangerine)" }}>
-                Forfeit: {room.forfeitText}
+              <p style={{ fontWeight: 700, color: "var(--stamp-bright)", fontFamily: "var(--font-mono)", fontSize: 13 }}>
+                AT STAKE: {room.forfeitText}
               </p>
             )}
           </motion.section>
@@ -133,9 +133,9 @@ export default function JoinPage({ params }: { params: { code: string } }) {
               {bundle.members.map((m, i) => (
                 <motion.div
                   key={m.id}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.06 * i, type: "spring", stiffness: 300, damping: 18 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04 * i, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -164,7 +164,7 @@ export default function JoinPage({ params }: { params: { code: string } }) {
 
           <div style={{ marginTop: "auto" }}>
             {joinable ? (
-              <button className="btn btn-lime" disabled={busy} onClick={join}>
+              <button className="btn" disabled={busy} onClick={join}>
                 {busy ? "Joining…" : "Count me in"}
               </button>
             ) : (

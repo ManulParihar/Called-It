@@ -67,8 +67,8 @@ export function DevBar({
         right: 0,
         bottom: 0,
         zIndex: 50,
-        background: "rgba(10,10,14,0.92)",
-        borderTop: "1px solid rgba(255,243,226,0.12)",
+        background: "rgba(8,17,13,0.94)",
+        borderTop: "1px solid var(--chalk-line)",
         padding: "8px 12px calc(8px + env(safe-area-inset-bottom))",
         display: "flex",
         flexDirection: "column",
@@ -84,7 +84,7 @@ export function DevBar({
           fontSize: 10,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
-          color: "var(--cream-dim)",
+          color: "var(--chalk-dim)",
         }}
       >
         <span>Testing tools</span>
@@ -107,7 +107,7 @@ export function DevBar({
           {busy === "play" ? "Playing…" : "Play"}
         </button>
         <button
-          className="btn btn-lime btn-small"
+          className="btn btn-small"
           style={{ flex: 1 }}
           onClick={() => run("end")}
           disabled={busy !== null}

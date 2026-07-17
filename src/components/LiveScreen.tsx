@@ -1,13 +1,14 @@
 "use client";
 
-// The live match screen. Score up top, the referee calling the action, big
-// flashes for the loud moments, the event ticker, and the running order.
+// The live match screen. Scoreboard up top, the bookie calling the action,
+// headline slams for the loud moments, your slip being stamped line by line,
+// the standings, and the wire at the bottom.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Member, RoomBundle } from "@/lib/types";
 import type { MatchState, TeamSide } from "@/lib/match";
-import { liveLeaderboard, projectedPayouts } from "@/lib/live";
+import { liveLeaderboard, potCents, projectedPayouts } from "@/lib/live";
 import type { LiveEvent } from "@/hooks/useRoomBundle";
 import { useSoundCues, type SoundCue } from "@/hooks/useSoundCues";
 import { EventFlash, type FlashSpec } from "./EventFlash";
@@ -46,29 +47,29 @@ interface RefereeState {
 function refereeFor(event: LiveEvent, teamName: string | null): RefereeState | null {
   switch (event.kind) {
     case "goal":
-      return { mood: "celebrate", line: `GOAL for ${teamName}! The arena erupts!` };
+      return { mood: "celebrate", line: `GOAL, ${teamName}! The whole board just moved!` };
     case "red_card":
-      return { mood: "alarm", line: `RED CARD! ${teamName} are down a fighter!` };
+      return { mood: "alarm", line: `Red card! ${teamName} down to ten. Slips are shaking.` };
     case "penalty_awarded":
-      return { mood: "alarm", line: `Penalty to ${teamName}! Huge moment!` };
+      return { mood: "alarm", line: `Penalty to ${teamName}. Somebody's slip hangs on this.` };
     case "var_review":
-      return { mood: "alarm", line: "VAR is having a look. Nobody breathe." };
+      return { mood: "alarm", line: "VAR check. Nobody touch their slip." };
     case "yellow_card":
-      return { mood: "hype", line: `${teamName} go into the book.` };
+      return { mood: "hype", line: `${teamName} go in the book. So noted.` };
     case "corner":
-      return { mood: "neutral", line: `Corner for ${teamName}. Bodies in the box!` };
+      return { mood: "neutral", line: `Corner, ${teamName}. Cheap drama.` };
     case "substitution":
-      return { mood: "neutral", line: `Fresh legs coming on for ${teamName}.` };
+      return { mood: "neutral", line: `Change on for ${teamName}.` };
     case "phase_change":
       switch (event.phase) {
         case "first_half":
-          return { mood: "hype", line: "We are LIVE! Your calls are locked!" };
+          return { mood: "hype", line: "Whistle's gone. The book is closed — slips are locked!" };
         case "half_time":
-          return { mood: "neutral", line: "Half time. Check the standings and sweat." };
+          return { mood: "neutral", line: "Half time. Check your lines and breathe." };
         case "second_half":
-          return { mood: "hype", line: "Back underway! Everything to play for!" };
+          return { mood: "hype", line: "Back on. Everything still to pay for!" };
         case "ended":
-          return { mood: "celebrate", line: "Full time! Counting up the damage…" };
+          return { mood: "celebrate", line: "Full time! Bring me your slips…" };
         default:
           return null;
       }
@@ -81,15 +82,15 @@ function eventLabel(event: LiveEvent, teamName: string | null): string {
   const min = event.minute != null ? `${event.minute}'` : "";
   switch (event.kind) {
     case "goal":
-      return `${min} Goal, ${teamName}`;
+      return `${min} GOAL — ${teamName}`;
     case "yellow_card":
       return `${min} Yellow card, ${teamName}`;
     case "red_card":
-      return `${min} Red card, ${teamName}`;
+      return `${min} RED CARD — ${teamName}`;
     case "corner":
       return `${min} Corner, ${teamName}`;
     case "penalty_awarded":
-      return `${min} Penalty, ${teamName}`;
+      return `${min} PENALTY — ${teamName}`;
     case "var_review":
       return `${min} VAR review`;
     case "substitution":
@@ -118,12 +119,12 @@ export function LiveScreen({
   const teamName = (side: TeamSide | null): string | null =>
     side === "home" ? room.fixture.homeTeam : side === "away" ? room.fixture.awayTeam : null;
 
-  // Feed new events into the flash queue and the referee, one pass per event.
+  // Feed new events into the flash queue and the bookie, one pass per event.
   const processed = useRef(0);
   const [flashQueue, setFlashQueue] = useState<FlashSpec[]>([]);
   const [referee, setReferee] = useState<RefereeState>({
     mood: "neutral",
-    line: "I have eyes on the pitch. Stay close.",
+    line: "Book's closed. I see everything from here.",
   });
 
   useEffect(() => {
@@ -159,6 +160,7 @@ export function LiveScreen({
   );
   const questions = [...bundle.questions].sort((a, b) => a.slot - b.slot);
   const ticker = [...events].reverse().slice(0, 12);
+  const pot = potCents(bundle);
 
   return (
     <main style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
@@ -168,11 +170,11 @@ export function LiveScreen({
       />
 
       {/* scoreboard */}
-      <section
-        className="card poster-stripes"
-        style={{ textAlign: "center", padding: "18px 12px" }}
-      >
-        <p className="eyebrow" style={{ display: "flex", justifyContent: "center", gap: 8, alignItems: "center" }}>
+      <section className="card" style={{ textAlign: "center", padding: "16px 12px" }}>
+        <p
+          className="eyebrow"
+          style={{ display: "flex", justifyContent: "center", gap: 8, alignItems: "center" }}
+        >
           {inPlay && phase !== "ended" && <span className="live-dot" />}
           {PHASE_LABELS[phase] ?? phase}
           {matchState && inPlay && phase !== "ended" ? ` · ${matchState.minute}'` : ""}
@@ -191,80 +193,123 @@ export function LiveScreen({
           </p>
           <motion.p
             key={`${matchState?.goals.home ?? 0}-${matchState?.goals.away ?? 0}`}
-            initial={{ scale: 1.6, color: "#c8f527" }}
-            animate={{ scale: 1, color: "#fff3e2" }}
-            transition={{ duration: 0.5 }}
-            className="display"
-            style={{ fontSize: 42, whiteSpace: "nowrap" }}
+            initial={{ scale: 1.5 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", duration: 0.45, bounce: 0.3 }}
+            className="display tnum"
+            style={{ fontSize: 44, whiteSpace: "nowrap", color: "var(--amber)" }}
           >
             {matchState?.goals.home ?? 0}
-            <span style={{ color: "var(--cream-dim)", fontSize: 28 }}> : </span>
+            <span style={{ color: "var(--chalk-dim)", fontSize: 26 }}> – </span>
             {matchState?.goals.away ?? 0}
           </motion.p>
           <p className="display" style={{ fontSize: 15, flex: 1, textAlign: "right" }}>
             {room.fixture.awayTeam}
           </p>
         </div>
+        {/* what's riding on it, always in view */}
+        <p
+          style={{
+            marginTop: 8,
+            fontFamily: "var(--font-mono)",
+            fontWeight: 700,
+            fontSize: 12,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: room.wagerType === "money" ? "var(--amber)" : "var(--stamp-bright)",
+          }}
+        >
+          {room.wagerType === "money"
+            ? `Pot $${(pot / 100).toFixed(0)} · winner paid at full time`
+            : `At stake: ${room.forfeitText}`}
+        </p>
       </section>
 
       <Referee mood={referee.mood} line={referee.line} />
 
-      {/* your five calls, colouring in as the match resolves them */}
+      {/* your slip, stamped line by line as the match resolves it */}
       <section>
         <p className="eyebrow" style={{ marginBottom: 6 }}>
-          Your calls
+          Your slip
         </p>
-        <div style={{ display: "flex", gap: 6 }}>
-          {questions.map((q) => {
+        <div className="slip" style={{ padding: "8px 12px", fontSize: 12 }}>
+          {questions.map((q, i) => {
             const mine = myAnswers.get(q.id);
             const hit = q.outcome !== "pending" && q.outcome !== "void" && mine === q.outcome;
             const miss = q.outcome !== "pending" && q.outcome !== "void" && mine !== q.outcome;
             return (
-              <motion.div
+              <div
                 key={q.id}
-                layout
-                animate={
-                  hit
-                    ? { borderColor: "rgba(200,245,39,0.8)", background: "rgba(200,245,39,0.12)" }
-                    : miss
-                      ? { borderColor: "rgba(255,66,66,0.8)", background: "rgba(255,66,66,0.1)" }
-                      : {}
-                }
-                className="card"
                 style={{
-                  flex: 1,
-                  padding: "8px 4px",
-                  textAlign: "center",
-                  borderColor: q.points === 3 ? "var(--gold)" : undefined,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "5px 0",
+                  borderBottom:
+                    i < questions.length - 1 ? "1px dashed rgba(23,21,15,0.18)" : "none",
                 }}
-                title={q.text}
               >
-                <p className="display" style={{ fontSize: 12, color: "var(--cream-dim)" }}>
-                  {q.points === 3 ? "★" : `Q${q.slot}`}
-                </p>
-                <p
-                  className="display"
+                <span
                   style={{
-                    fontSize: 13,
-                    color:
-                      mine === "yes" ? "var(--lime)" : mine ? "var(--danger)" : "var(--cream-dim)",
+                    fontWeight: 700,
+                    color: q.points === 3 ? "var(--ink)" : "var(--ink-soft)",
+                    background: q.points === 3 ? "rgba(255,181,32,0.5)" : "none",
+                    padding: q.points === 3 ? "0 4px" : 0,
+                    fontSize: 11,
                   }}
                 >
-                  {mine ?? "-"}
-                </p>
-                <p style={{ fontSize: 11, fontWeight: 800 }}>
+                  {q.points === 3 ? "3PT" : `Q${q.slot}`}
+                </span>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontWeight: 700,
+                  }}
+                  title={q.text}
+                >
+                  {q.text}
+                </span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: mine === "yes" ? "var(--grass-ink)" : mine ? "var(--stamp)" : "var(--ink-soft)",
+                  }}
+                >
+                  {mine ?? "—"}
+                </span>
+                <span style={{ width: 34, textAlign: "right", fontWeight: 700 }}>
                   {hit ? (
-                    <span style={{ color: "var(--lime)" }}>+{q.points}</span>
+                    <motion.span
+                      initial={{ scale: 1.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", duration: 0.35, bounce: 0.4 }}
+                      style={{ display: "inline-block", color: "var(--grass-ink)" }}
+                    >
+                      ✓ +{q.points}
+                    </motion.span>
                   ) : miss ? (
-                    <span style={{ color: "var(--danger)" }}>0</span>
+                    <motion.span
+                      initial={{ scale: 1.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", duration: 0.35, bounce: 0.4 }}
+                      style={{ display: "inline-block", color: "var(--stamp)" }}
+                    >
+                      ✗ 0
+                    </motion.span>
                   ) : (
-                    <span className="muted">…</span>
+                    <span style={{ color: "var(--ink-soft)" }}>…</span>
                   )}
-                </p>
-              </motion.div>
+                </span>
+              </div>
             );
           })}
         </div>
+        <div className="slip-tear" />
       </section>
 
       {/* running order */}
@@ -275,10 +320,10 @@ export function LiveScreen({
         <Leaderboard entries={board} payoutByMember={payouts} highlightMemberId={me.id} />
       </section>
 
-      {/* ticker */}
+      {/* the wire */}
       <section style={{ paddingBottom: 8 }}>
         <p className="eyebrow" style={{ marginBottom: 6 }}>
-          What happened
+          The wire
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <AnimatePresence initial={false}>
@@ -290,19 +335,21 @@ export function LiveScreen({
             {ticker.map((event) => (
               <motion.p
                 key={event.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -14 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 style={{
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 12,
+                  fontWeight: 700,
                   color:
                     event.kind === "goal"
-                      ? "var(--lime)"
+                      ? "var(--grass)"
                       : event.kind === "red_card"
-                        ? "var(--danger)"
+                        ? "var(--stamp-bright)"
                         : event.kind === "penalty_awarded"
-                          ? "var(--tangerine)"
-                          : "var(--cream-dim)",
+                          ? "var(--amber)"
+                          : "var(--chalk-dim)",
                 }}
               >
                 {eventLabel(event, teamName(event.team))}

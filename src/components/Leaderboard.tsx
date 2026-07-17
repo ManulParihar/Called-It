@@ -1,7 +1,8 @@
 "use client";
 
-// The standings table used on the live and full time screens. Rows slide to
-// their new spot when the order changes mid match.
+// The standings used on the live and full time screens. Rows spring to their
+// new spot when the order changes mid match, and the bottom name is put on
+// the hook while the match is still running.
 
 import { motion } from "framer-motion";
 import type { LeaderboardEntry } from "@/lib/types";
@@ -38,32 +39,32 @@ export function Leaderboard({
               padding: "8px 12px",
               borderRadius: "var(--radius-sm)",
               background: winner
-                ? "rgba(200,245,39,0.1)"
+                ? "rgba(69,178,107,0.12)"
                 : loser && final
-                  ? "rgba(255,66,66,0.12)"
-                  : "var(--night-2)",
-              border: `2px solid ${
+                  ? "rgba(240,89,74,0.12)"
+                  : "var(--pitch-2)",
+              border: `1px solid ${
                 winner
-                  ? "rgba(200,245,39,0.5)"
+                  ? "rgba(69,178,107,0.55)"
                   : loser && final
-                    ? "rgba(255,66,66,0.5)"
+                    ? "rgba(240,89,74,0.55)"
                     : me
-                      ? "rgba(255,243,226,0.3)"
-                      : "rgba(255,243,226,0.06)"
+                      ? "rgba(242,244,236,0.4)"
+                      : "var(--chalk-line)"
               }`,
             }}
           >
             <span
               className="display"
               style={{
-                width: 24,
-                fontSize: 16,
+                width: 22,
+                fontSize: 17,
                 color:
                   entry.rank === 1
-                    ? "var(--gold)"
+                    ? "var(--amber)"
                     : loser && final
-                      ? "var(--danger)"
-                      : "var(--cream-dim)",
+                      ? "var(--stamp-bright)"
+                      : "var(--chalk-dim)",
               }}
             >
               {entry.rank}
@@ -74,6 +75,7 @@ export function Leaderboard({
                 fontWeight: 700,
                 fontSize: 14,
                 flex: 1,
+                minWidth: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -87,9 +89,32 @@ export function Leaderboard({
                 </span>
               )}
             </span>
+            {/* stakes made visible: who's on the hook while it's live */}
+            {loser && !final && entries.length > 1 && (
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                  fontSize: 9,
+                  letterSpacing: "0.08em",
+                  color: "var(--stamp-bright)",
+                  border: "1px solid rgba(240,89,74,0.5)",
+                  borderRadius: 3,
+                  padding: "2px 5px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                ON THE HOOK
+              </span>
+            )}
             {payout > 0 && (
               <span
-                style={{ color: "var(--lime)", fontWeight: 800, fontSize: 13 }}
+                style={{
+                  color: "var(--amber)",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
               >
                 ${(payout / 100).toFixed(2)}
               </span>
@@ -98,13 +123,13 @@ export function Leaderboard({
               className="display"
               style={{
                 fontSize: 18,
-                color: winner ? "var(--lime)" : "var(--cream)",
+                color: winner ? "var(--grass)" : "var(--chalk)",
                 minWidth: 34,
                 textAlign: "right",
               }}
             >
               {entry.points}
-              <span style={{ fontSize: 10, color: "var(--cream-dim)" }}> pt</span>
+              <span style={{ fontSize: 10, color: "var(--chalk-dim)" }}> pt</span>
             </span>
           </motion.div>
         );

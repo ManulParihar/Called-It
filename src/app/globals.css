@@ -1,33 +1,51 @@
 /* Global look for Called It.
-   Lucha arcade: deep aubergine night, hot magenta, acid lime, tangerine.
+   Match night at the ground: the floodlit pitch from the stands, chalk
+   touchlines, the bookie's paper slips and rubber stamps, scoreboard amber.
    Everything is sized for one hand on a phone. */
 
 :root {
-  /* palette */
-  --night: #180a26; /* page background */
-  --night-2: #241238; /* raised surfaces */
-  --night-3: #31194d; /* higher surfaces, inputs */
-  --magenta: #ff2e88; /* main action colour */
-  --magenta-deep: #c40f5f;
-  --lime: #c8f527; /* yes, wins, money */
-  --lime-deep: #8fb607;
-  --tangerine: #ff8c1a; /* the three point card, heat */
-  --gold: #ffcf3f;
-  --cream: #fff3e2; /* main text */
-  --cream-dim: #cbb8d9; /* secondary text */
-  --danger: #ff4242; /* no, red cards */
-  --sky: #3fd8e8; /* rare cool accent */
+  /* palette — every colour named by its source */
+  --pitch: #0e211a; /* the pitch under floodlights, seen from the stands */
+  --pitch-2: #142b20; /* raised panels */
+  --pitch-3: #1b3528; /* inputs, higher surfaces */
+  --chalk: #f2f4ec; /* fresh touchline paint, main text */
+  --chalk-dim: #a9b7ab; /* worn touchline, secondary text */
+  --chalk-line: rgba(242, 244, 236, 0.16); /* panel rules */
+  --paper: #f4efe2; /* betting slip paper */
+  --paper-2: #e7e0cc; /* the slip underneath, pressed state */
+  --ink: #17150f; /* thermal print ink */
+  --ink-soft: #57523f; /* faded print, secondary on paper */
+  --amber: #ffb520; /* scoreboard bulbs, the odds board, money */
+  --grass: #45b26b; /* a call that lands (on dark ground) */
+  --grass-ink: #1e7a43; /* the PAID stamp (on paper) */
+  --stamp: #d7301f; /* the bookie's rubber stamp, a red card (on paper) */
+  --stamp-bright: #f0594a; /* the same red inked for dark ground */
 
-  --radius: 20px;
-  --radius-sm: 12px;
-  --shadow-pop: 0 6px 0 rgba(0, 0, 0, 0.45);
-  --font-display: var(--font-bungee), "Arial Black", sans-serif;
-  --font-body: var(--font-rubik), system-ui, sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-drop: 0 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-paper: 0 2px 0 rgba(0, 0, 0, 0.35);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-courier), "Courier New", monospace;
 }
 
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+button,
+a,
+input,
+select {
+  touch-action: manipulation;
 }
 
 html,
@@ -38,12 +56,14 @@ body {
 }
 
 body {
-  background: var(--night);
-  background-image:
-    radial-gradient(circle at 15% 8%, rgba(255, 46, 136, 0.14), transparent 42%),
-    radial-gradient(circle at 88% 20%, rgba(200, 245, 39, 0.08), transparent 38%),
-    radial-gradient(circle at 50% 105%, rgba(255, 140, 26, 0.12), transparent 50%);
-  color: var(--cream);
+  background: var(--pitch);
+  /* one floodlight over the top of the stand, nothing else */
+  background-image: radial-gradient(
+    ellipse 120% 45% at 50% -8%,
+    rgba(242, 244, 236, 0.07),
+    transparent 70%
+  );
+  color: var(--chalk);
   font-family: var(--font-body);
   overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
@@ -69,6 +89,7 @@ h3,
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  text-wrap: balance;
   margin: 0;
 }
 
@@ -91,6 +112,11 @@ textarea {
   font: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 /* --- shared building blocks ------------------------------------------- */
 
 .btn {
@@ -99,95 +125,109 @@ textarea {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 16px 20px;
-  border-radius: var(--radius);
+  min-height: 52px;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-display);
   font-size: 18px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--night);
-  background: var(--magenta);
-  box-shadow: var(--shadow-pop), 0 0 24px rgba(255, 46, 136, 0.35);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  background: var(--amber);
+  box-shadow: var(--shadow-drop);
+  transition:
+    transform 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out),
+    opacity 150ms ease;
   user-select: none;
 }
 
 .btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    filter: brightness(1.06);
+  }
+  .pill:not(.on):hover {
+    border-color: rgba(242, 244, 236, 0.35);
+    color: var(--chalk);
+  }
 }
 
 .btn:disabled {
-  filter: saturate(0.25) brightness(0.7);
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.btn-lime {
-  background: var(--lime);
-  box-shadow: var(--shadow-pop), 0 0 24px rgba(200, 245, 39, 0.3);
-}
-
 .btn-ghost {
-  background: var(--night-3);
-  color: var(--cream);
-  box-shadow: var(--shadow-pop);
+  background: transparent;
+  color: var(--chalk);
+  border: 1px solid var(--chalk-line);
+  box-shadow: none;
 }
 
 .btn-small {
   width: auto;
+  min-height: 44px;
   padding: 10px 16px;
   font-size: 14px;
-  border-radius: var(--radius-sm);
 }
 
 .card {
-  background: var(--night-2);
-  border: 2px solid rgba(255, 243, 226, 0.08);
+  background: var(--pitch-2);
+  border: 1px solid var(--chalk-line);
   border-radius: var(--radius);
   padding: 16px;
 }
 
 .field {
   width: 100%;
-  background: var(--night-3);
-  border: 2px solid rgba(255, 243, 226, 0.12);
+  background: var(--pitch-3);
+  border: 1px solid var(--chalk-line);
   border-radius: var(--radius-sm);
-  color: var(--cream);
+  color: var(--chalk);
   padding: 14px;
+  min-height: 52px;
   font-size: 16px;
   outline: none;
+  transition: border-color 150ms ease;
 }
 
 .field:focus {
-  border-color: var(--magenta);
+  border-color: var(--amber);
 }
 
 .field::placeholder {
-  color: var(--cream-dim);
-  opacity: 0.6;
+  color: var(--chalk-dim);
+  opacity: 0.55;
 }
 
 .eyebrow {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
+  font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--cream-dim);
+  color: var(--chalk-dim);
 }
 
 .muted {
-  color: var(--cream-dim);
+  color: var(--chalk-dim);
   font-size: 14px;
 }
 
 .error-line {
-  color: var(--danger);
+  color: var(--stamp-bright);
   font-size: 14px;
   font-weight: 600;
   text-align: center;
 }
 
-/* Pill toggles used for team pick, payout mode and wager type. */
+/* Pill toggles used for team pick, payout mode and wager type.
+   The chosen one reads like a ticket: paper with ink. */
 .pill-row {
   display: flex;
   gap: 8px;
@@ -197,103 +237,112 @@ textarea {
 .pill {
   flex: 1;
   min-width: 0;
+  min-height: 44px;
   padding: 12px 10px;
   border-radius: var(--radius-sm);
-  background: var(--night-3);
-  border: 2px solid rgba(255, 243, 226, 0.12);
-  color: var(--cream-dim);
-  font-weight: 700;
+  background: transparent;
+  border: 1px solid var(--chalk-line);
+  color: var(--chalk-dim);
+  font-weight: 600;
   font-size: 14px;
   text-align: center;
-  transition: all 0.12s ease;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .pill.on {
-  background: var(--magenta);
-  border-color: var(--magenta);
-  color: var(--night);
-  box-shadow: 0 0 16px rgba(255, 46, 136, 0.45);
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
 }
 
-.pill.on.pill-lime {
-  background: var(--lime);
-  border-color: var(--lime);
-  box-shadow: 0 0 16px rgba(200, 245, 39, 0.4);
-}
-
-/* Room code lettering */
+/* Room code lettering: a turnstile ticket number. */
 .room-code {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
+  font-weight: 700;
   font-size: 32px;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.3em;
   text-align: center;
-  color: var(--gold);
-  text-shadow: 0 0 18px rgba(255, 207, 63, 0.5);
+  color: var(--amber);
 }
 
-/* Scrolling marquee strip used on the title screen and live ticker. */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+/* --- the slip ----------------------------------------------------------
+   Paper on the dark ground. Anything that is a bet, a call or a settlement
+   gets printed on one of these. */
+
+.slip {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 3px 3px 0 0;
+  box-shadow: var(--shadow-paper);
+  font-family: var(--font-mono);
 }
 
-.marquee {
-  overflow: hidden;
-  white-space: nowrap;
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+/* torn perforation along the bottom of a slip */
+.slip-tear {
+  height: 8px;
+  background:
+    linear-gradient(-45deg, var(--paper) 5.5px, transparent 0) 0 0 / 11px 8px
+      repeat-x,
+    linear-gradient(45deg, var(--paper) 5.5px, transparent 0) 0 0 / 11px 8px
+      repeat-x;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25));
 }
 
-.marquee-inner {
+.slip-rule {
+  border: none;
+  border-top: 1px dashed rgba(23, 21, 15, 0.28);
+  margin: 8px 0;
+}
+
+/* A rubber stamp: bordered mono capitals, always a little crooked. */
+.stamp {
   display: inline-block;
-  animation: marquee 14s linear infinite;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 3px double currentColor;
+  border-radius: 6px;
+  padding: 3px 10px;
+  transform: rotate(-6deg);
 }
 
-/* Soft floating idle motion for characters. */
-@keyframes floaty {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-1.5deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(1.5deg);
-  }
+.tnum {
+  font-variant-numeric: tabular-nums;
 }
 
-.floaty {
-  animation: floaty 3.2s ease-in-out infinite;
-}
-
-/* Blinking "live" dot */
+/* Blinking "live" dot — the one ambient loop in the app. */
 @keyframes pulse-dot {
   0%,
   100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
-    opacity: 0.4;
-    transform: scale(0.75);
+    opacity: 0.35;
   }
 }
 
 .live-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: var(--danger);
+  background: var(--stamp-bright);
   display: inline-block;
-  animation: pulse-dot 1.1s ease-in-out infinite;
+  animation: pulse-dot 1.2s ease-in-out infinite;
 }
 
-/* Stripe texture for headers, like fight poster sunbursts. */
-.poster-stripes {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(255, 243, 226, 0.05) 0 10px,
-    transparent 10px 20px
-  );
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+    opacity: 1;
+  }
+  .btn,
+  .pill,
+  .field {
+    transition-duration: 1ms;
+  }
 }

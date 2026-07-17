@@ -1,12 +1,15 @@
 "use client";
 
-// Make your five calls. Swipe through the deck, check the recap, lock it in.
+// Make your five calls. Swipe through the book, check the printed slip, then
+// stamp it — after that it's official.
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { submitAnswers } from "@/lib/api";
 import type { Member, RoomBundle, Swipe } from "@/lib/types";
 import { SwipeDeck } from "./SwipeDeck";
+
+const EASE = [0.23, 1, 0.32, 1] as const;
 
 export function PredictScreen({
   bundle,
@@ -47,69 +50,102 @@ export function PredictScreen({
     <main style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
       <header style={{ textAlign: "center", paddingTop: 8 }}>
         <p className="eyebrow">{bundle.room.fixture.competition}</p>
-        <h1 style={{ fontSize: 22 }}>
+        <h1 style={{ fontSize: 24 }}>
           {bundle.room.fixture.homeTeam}{" "}
-          <span style={{ color: "var(--tangerine)" }}>vs</span>{" "}
+          <span style={{ color: "var(--amber)" }}>v</span>{" "}
           {bundle.room.fixture.awayTeam}
         </h1>
-        <p className="muted" style={{ marginTop: 4 }}>
-          Swipe <span style={{ color: "var(--lime)", fontWeight: 700 }}>right for yes</span>,{" "}
-          <span style={{ color: "var(--danger)", fontWeight: 700 }}>left for no</span>.
-        </p>
+        {!picks && (
+          <p className="muted" style={{ marginTop: 4, fontSize: 13 }}>
+            Swipe <span style={{ color: "var(--grass)", fontWeight: 700 }}>right for yes</span>,{" "}
+            <span style={{ color: "var(--stamp-bright)", fontWeight: 700 }}>left for no</span>.
+          </p>
+        )}
       </header>
 
       {!picks ? (
         <SwipeDeck questions={questions} onDone={setPicks} />
       ) : (
         <motion.section
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          style={{ display: "flex", flexDirection: "column", flex: 1 }}
         >
-          <h2 style={{ fontSize: 18, textAlign: "center", color: "var(--gold)" }}>
-            Your five calls
-          </h2>
-          {picks.map((pick, i) => {
-            const q = byId.get(pick.questionId);
-            if (!q) return null;
-            const yes = pick.choice === "yes";
-            return (
-              <motion.div
-                key={pick.questionId}
-                initial={{ opacity: 0, x: -18 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.06 * i }}
-                className="card"
+          {/* the printed slip, ready for the stamp */}
+          <div className="slip" style={{ padding: "14px 16px" }}>
+            <div style={{ textAlign: "center" }}>
+              <p className="display" style={{ fontSize: 22, color: "var(--ink)" }}>
+                Called It
+              </p>
+              <p
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 14px",
-                  borderColor: q.points === 3 ? "var(--gold)" : undefined,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "var(--ink-soft)",
+                  marginTop: 2,
                 }}
               >
-                <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>
-                  {q.text}
-                  {q.points === 3 && (
-                    <span style={{ color: "var(--gold)", fontWeight: 800 }}> ·3pt</span>
-                  )}
-                </span>
-                <span
-                  className="display"
+                OFFICIAL SLIP · ROOM {bundle.room.code} ·{" "}
+                {me.displayName.toUpperCase()}
+              </p>
+            </div>
+            <hr className="slip-rule" />
+            {picks.map((pick) => {
+              const q = byId.get(pick.questionId);
+              if (!q) return null;
+              const yes = pick.choice === "yes";
+              return (
+                <div
+                  key={pick.questionId}
                   style={{
-                    fontSize: 15,
-                    color: yes ? "var(--lime)" : "var(--danger)",
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 10,
+                    padding: "7px 0",
+                    borderBottom: "1px dashed rgba(23,21,15,0.18)",
                   }}
                 >
-                  {pick.choice}
-                </span>
-              </motion.div>
-            );
-          })}
+                  <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>
+                    {q.text}
+                    {q.points === 3 && (
+                      <span style={{ color: "var(--ink)", background: "rgba(255,181,32,0.5)", padding: "0 4px", marginLeft: 6, fontSize: 11 }}>
+                        3PT
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 14,
+                      textTransform: "uppercase",
+                      color: yes ? "var(--grass-ink)" : "var(--stamp)",
+                    }}
+                  >
+                    {pick.choice}
+                  </span>
+                </div>
+              );
+            })}
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                color: "var(--ink-soft)",
+                textAlign: "center",
+              }}
+            >
+              MAX RETURN 7 PTS · NO CHANGES AFTER THE STAMP
+            </p>
+          </div>
+          <div className="slip-tear" />
 
-          {error && <p className="error-line">{error}</p>}
+          {error && <p className="error-line" style={{ marginTop: 10 }}>{error}</p>}
 
-          <div style={{ marginTop: "auto", display: "flex", gap: 10 }}>
+          <div style={{ marginTop: "auto", display: "flex", gap: 10, paddingTop: 12 }}>
             <button
               className="btn btn-ghost"
               style={{ flex: 1 }}
@@ -119,12 +155,12 @@ export function PredictScreen({
               Redo
             </button>
             <button
-              className="btn btn-lime"
+              className="btn"
               style={{ flex: 2 }}
               onClick={lockIn}
               disabled={busy}
             >
-              {busy ? "Locking…" : "Lock it in"}
+              {busy ? "Stamping…" : "Stamp it"}
             </button>
           </div>
         </motion.section>
