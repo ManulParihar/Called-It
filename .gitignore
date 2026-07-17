@@ -17,6 +17,7 @@ next-env.d.ts
 
 # local mode database file
 /.local-db.json
+/.test-rooms-db.json
 
 # solana / anchor
 /anchor/target

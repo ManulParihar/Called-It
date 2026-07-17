@@ -11,17 +11,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getRoom } from "@/lib/api";
 import { subscribeRoom } from "@/lib/realtime";
-import type { RoomBundle } from "@/lib/types";
+import type { MatchEventRow, RoomBundle } from "@/lib/types";
 import { initialMatchState, type MatchState } from "@/lib/match";
 
-// The shape of a match_events row as realtime delivers it.
-export interface LiveEvent {
-  id: number;
-  kind: string;
-  team: "home" | "away" | null;
-  minute: number | null;
-  phase: string | null;
-}
+// The shape of a match_events row, whether realtime delivered it or it arrived
+// backfilled on the bundle. Same row either way.
+export type LiveEvent = MatchEventRow;
 
 const POLL_MS = 4000;
 
@@ -43,6 +38,22 @@ export function useRoomBundle(code: string): {
       .then((next) => {
         setBundle(next);
         setError(null);
+
+        // Merge the bundle's events in beside anything realtime already gave
+        // us, keyed on the same seen set so neither source duplicates the
+        // other. Kept sorted by id: the ticker and the live screen both treat
+        // this as append only.
+        const fresh = (next.events ?? []).filter(
+          (row) => !seenEventIds.current.has(row.id),
+        );
+        if (fresh.length > 0) {
+          for (const row of fresh) seenEventIds.current.add(row.id);
+          setEvents((prev) => [...prev, ...fresh].sort((a, b) => a.id - b.id));
+        }
+
+        // A poll with no state row yet must not wipe a state realtime has
+        // already delivered.
+        if (next.matchState) setMatchState(next.matchState);
       })
       .catch((err: Error) => setError(err.message));
   }, [code]);

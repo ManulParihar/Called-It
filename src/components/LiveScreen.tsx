@@ -13,7 +13,7 @@ import type { LiveEvent } from "@/hooks/useRoomBundle";
 import { useSoundCues, type SoundCue } from "@/hooks/useSoundCues";
 import { EventFlash, type FlashSpec } from "./EventFlash";
 import { Leaderboard } from "./Leaderboard";
-import { Referee, type RefereeMood } from "./Referee";
+import { Referee, type RefereeAct, type RefereeCue, type RefereeMood } from "./Referee";
 
 const PHASE_LABELS: Record<string, string> = {
   not_started: "Waiting for kickoff",
@@ -42,40 +42,64 @@ const LOUD: Record<string, SoundCue> = {
 interface RefereeState {
   mood: RefereeMood;
   line: string;
+  act?: RefereeAct; // absent only for his resting line before anything happens
 }
+
+const RESTING: RefereeState = {
+  mood: "neutral",
+  line: "Book's closed. I see everything from here.",
+};
 
 function refereeFor(event: LiveEvent, teamName: string | null): RefereeState | null {
   switch (event.kind) {
     case "goal":
-      return { mood: "celebrate", line: `GOAL, ${teamName}! The whole board just moved!` };
+      return { mood: "celebrate", act: "goal", line: `GOAL, ${teamName}! The whole board just moved!` };
     case "red_card":
-      return { mood: "alarm", line: `Red card! ${teamName} down to ten. Slips are shaking.` };
+      return { mood: "alarm", act: "red_card", line: `Red card! ${teamName} down to ten. Slips are shaking.` };
     case "penalty_awarded":
-      return { mood: "alarm", line: `Penalty to ${teamName}. Somebody's slip hangs on this.` };
+      return { mood: "alarm", act: "penalty", line: `Penalty to ${teamName}. Somebody's slip hangs on this.` };
     case "var_review":
-      return { mood: "alarm", line: "VAR check. Nobody touch their slip." };
+      return { mood: "alarm", act: "var", line: "VAR check. Nobody touch their slip." };
     case "yellow_card":
-      return { mood: "hype", line: `${teamName} go in the book. So noted.` };
+      return { mood: "hype", act: "yellow_card", line: `${teamName} go in the book. So noted.` };
     case "corner":
-      return { mood: "neutral", line: `Corner, ${teamName}. Cheap drama.` };
+      return { mood: "neutral", act: "corner", line: `Corner, ${teamName}. Cheap drama.` };
     case "substitution":
-      return { mood: "neutral", line: `Change on for ${teamName}.` };
+      return { mood: "neutral", act: "substitution", line: `Change on for ${teamName}.` };
     case "phase_change":
       switch (event.phase) {
         case "first_half":
-          return { mood: "hype", line: "Whistle's gone. The book is closed — slips are locked!" };
+          return {
+            mood: "hype",
+            act: "kickoff",
+            line: "Whistle's gone. The book is closed — slips are locked!",
+          };
         case "half_time":
-          return { mood: "neutral", line: "Half time. Check your lines and breathe." };
+          return { mood: "neutral", act: "half_time", line: "Half time. Check your lines and breathe." };
         case "second_half":
-          return { mood: "hype", line: "Back on. Everything still to pay for!" };
+          return { mood: "hype", act: "kickoff", line: "Back on. Everything still to pay for!" };
         case "ended":
-          return { mood: "celebrate", line: "Full time! Bring me your slips…" };
+          return { mood: "celebrate", act: "full_time", line: "Full time! Bring me your slips…" };
         default:
           return null;
       }
     default:
       return null;
   }
+}
+
+// Which moments earn the whole screen. Corners and substitutions deliberately
+// get nothing: a full screen slam for a corner is how this turns into noise by
+// the twentieth minute. The bookie still calls those.
+const FLASH_KINDS = new Set(["goal", "red_card", "penalty_awarded", "var_review", "yellow_card"]);
+
+function flashFor(event: LiveEvent, teamName: string | null): FlashSpec | null {
+  if (event.kind === "phase_change") {
+    // Full time is a phase change, not a kind of its own.
+    return event.phase === "ended" ? { key: event.id, kind: "full_time", teamName: null } : null;
+  }
+  if (!FLASH_KINDS.has(event.kind)) return null;
+  return { key: event.id, kind: event.kind, teamName };
 }
 
 function eventLabel(event: LiveEvent, teamName: string | null): string {
@@ -120,11 +144,23 @@ export function LiveScreen({
     side === "home" ? room.fixture.homeTeam : side === "away" ? room.fixture.awayTeam : null;
 
   // Feed new events into the flash queue and the bookie, one pass per event.
-  const processed = useRef(0);
+  //
+  // Anything already in the list when this screen mounts is history, not news:
+  // the room backfills every event that has happened so far, so a member who
+  // reloads at half time would otherwise get a flash for every goal at once.
+  // Starting the cursor at the end means only what arrives afterwards performs.
+  const processed = useRef(events.length);
   const [flashQueue, setFlashQueue] = useState<FlashSpec[]>([]);
-  const [referee, setReferee] = useState<RefereeState>({
-    mood: "neutral",
-    line: "Book's closed. I see everything from here.",
+  const [refereeCue, setRefereeCue] = useState<RefereeCue | null>(null);
+
+  // He still catches up on the mood: the last thing that happened is where he
+  // already is, he just does not re-perform it.
+  const [referee, setReferee] = useState<RefereeState>(() => {
+    for (let i = events.length - 1; i >= 0; i--) {
+      const caught = refereeFor(events[i], teamName(events[i].team));
+      if (caught) return caught;
+    }
+    return RESTING;
   });
 
   useEffect(() => {
@@ -136,11 +172,13 @@ export function LiveScreen({
     for (const event of fresh) {
       const name = teamName(event.team);
       const nextReferee = refereeFor(event, name);
-      if (nextReferee) setReferee(nextReferee);
-      if (LOUD[event.kind]) {
-        cue(LOUD[event.kind]);
-        newFlashes.push({ key: event.id, kind: event.kind, teamName: name });
+      if (nextReferee) {
+        setReferee(nextReferee);
+        if (nextReferee.act) setRefereeCue({ act: nextReferee.act, key: event.id });
       }
+      if (LOUD[event.kind]) cue(LOUD[event.kind]);
+      const flash = flashFor(event, name);
+      if (flash) newFlashes.push(flash);
     }
     if (newFlashes.length > 0) setFlashQueue((q) => [...q, ...newFlashes]);
     // teamName is stable per room; events drive this effect.
@@ -225,7 +263,7 @@ export function LiveScreen({
         </p>
       </section>
 
-      <Referee mood={referee.mood} line={referee.line} />
+      <Referee mood={referee.mood} line={referee.line} act={refereeCue} />
 
       {/* your slip, stamped line by line as the match resolves it */}
       <section>

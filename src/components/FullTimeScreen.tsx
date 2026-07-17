@@ -17,6 +17,13 @@ import { Referee } from "./Referee";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 
+// Confetti is a canvas, outside framer's control, so the motion preference has
+// to be read by hand here — same as EventFlash.
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function FullTimeScreen({
   bundle,
   matchState,
@@ -42,12 +49,14 @@ export function FullTimeScreen({
   // One burst of confetti as the curtain drops, a bigger one if you won.
   useEffect(() => {
     cue(meWon ? "win" : "whistle");
-    confetti({
-      particleCount: meWon ? 220 : 80,
-      spread: 100,
-      origin: { y: 0.4 },
-      colors: ["#f2f4ec", "#ffb520", "#45b26b", "#f4efe2"],
-    });
+    if (!prefersReducedMotion()) {
+      confetti({
+        particleCount: meWon ? 220 : 80,
+        spread: 100,
+        origin: { y: 0.4 },
+        colors: ["#f2f4ec", "#ffb520", "#45b26b", "#f4efe2"],
+      });
+    }
     // Once, when the screen appears.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

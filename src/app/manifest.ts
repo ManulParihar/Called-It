@@ -9,8 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#180a26",
-    theme_color: "#180a26",
+    // Matches the pitch dark in globals.css and the themeColor in layout.tsx.
+    background_color: "#0e211a",
+    theme_color: "#0e211a",
     icons: [
       {
         src: "/icon.svg",

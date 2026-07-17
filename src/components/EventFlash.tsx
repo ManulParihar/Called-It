@@ -20,7 +20,14 @@ interface Look {
   ink: string; // headline colour on the paper strip
   wash: string; // full screen tint
   confetti?: boolean;
-  redCard?: boolean;
+  card?: string; // a card thrown on screen, in this colour
+}
+
+// Confetti is a canvas, outside framer's control, so the motion preference has
+// to be read by hand here.
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function lookFor(spec: FlashSpec): Look | null {
@@ -39,7 +46,23 @@ function lookFor(spec: FlashSpec): Look | null {
         sub: spec.teamName ?? undefined,
         ink: "var(--stamp)",
         wash: "rgba(215,48,31,0.22)",
-        redCard: true,
+        card: "var(--stamp)",
+      };
+    case "yellow_card":
+      return {
+        word: "IN THE BOOK",
+        sub: spec.teamName ?? undefined,
+        ink: "var(--ink)",
+        wash: "rgba(255,181,32,0.14)",
+        card: "var(--amber)",
+      };
+    case "full_time":
+      return {
+        word: "FULL TIME",
+        sub: "settle up",
+        ink: "var(--ink)",
+        wash: "rgba(69,178,107,0.16)",
+        confetti: true,
       };
     case "penalty_awarded":
       return {
@@ -71,7 +94,7 @@ export function EventFlash({
 
   useEffect(() => {
     if (!flash || !look) return;
-    if (look.confetti) {
+    if (look.confetti && !prefersReducedMotion()) {
       confetti({
         particleCount: 110,
         spread: 80,
@@ -107,7 +130,7 @@ export function EventFlash({
             pointerEvents: "none",
           }}
         >
-          {look.redCard && (
+          {look.card && (
             <motion.div
               aria-hidden
               initial={{ opacity: 0, y: 40, rotate: -20 }}
@@ -117,7 +140,7 @@ export function EventFlash({
                 width: 74,
                 height: 104,
                 borderRadius: 8,
-                background: "var(--stamp)",
+                background: look.card,
                 boxShadow: "0 4px 0 rgba(0,0,0,0.4)",
               }}
             />

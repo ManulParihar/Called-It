@@ -3,7 +3,7 @@
 // These describe a room, the players in it, the five questions, the answers,
 // and the results. The UI reads and writes these shapes, so keep them stable.
 
-import type { TeamSide } from "./match";
+import type { MatchState, TeamSide } from "./match";
 
 // How the group is playing for stakes.
 export type WagerType = "money" | "forfeit";
@@ -117,12 +117,27 @@ export interface PayoutShare {
   amountCents: number;
 }
 
+// One match_events row as it comes back from the database. The kind and phase
+// stay loose strings rather than the union types in lib/match: this is text out
+// of a table, not something we have validated.
+export interface MatchEventRow {
+  id: number;
+  kind: string;
+  team: "home" | "away" | null;
+  minute: number | null;
+  phase: string | null;
+}
+
 // Everything the screens need about one room, returned by the room endpoints.
+// The events and match state are here so a screen that mounts fresh, or one
+// that never got a realtime socket, still knows what has happened so far.
 export interface RoomBundle {
   room: Room;
   members: Member[];
   questions: Question[];
   answers: Answer[];
+  events: MatchEventRow[];
+  matchState: MatchState | null;
 }
 
 // The full result of a room, ready to show and to settle.

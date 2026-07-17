@@ -4,11 +4,12 @@
 
 import { randomInt } from "node:crypto";
 import { z } from "zod";
-import type { TeamSide } from "../lib/match";
+import type { MatchState, TeamSide } from "../lib/match";
 import { generateQuestions } from "../lib/questions/engine";
 import type {
   Answer,
   Fixture,
+  MatchEventRow,
   Member,
   Question,
   Room,
@@ -103,6 +104,12 @@ async function uniqueCode(): Promise<string> {
 export async function createRoom(input: CreateRoomInput): Promise<RoomBundle> {
   const db = serverDb();
   const fixture = await fetchFixture(input.fixtureId);
+  // A room opened after kickoff could never be played: lock_at below is the
+  // kickoff, so it would be born locked. The lobby already hides started
+  // fixtures; this catches a stale picker.
+  if (Date.now() >= new Date(fixture.kickoffAt).getTime()) {
+    throw new Error("That match has already kicked off");
+  }
   const code = await uniqueCode();
 
   const { data: roomRow, error: roomError } = await db
@@ -193,18 +200,49 @@ export async function getRoomBundle(code: string): Promise<RoomBundle | null> {
   const row = roomRow as RoomRow & { fixtures: FixtureRow };
   const room = toRoom(row, row.fixtures);
 
-  const [{ data: memberRows }, { data: questionRows }, { data: answerRows }] =
-    await Promise.all([
-      db.from("members").select("*").eq("room_id", room.id).order("joined_at"),
-      db.from("questions").select("*").eq("room_id", room.id).order("slot"),
-      db.from("answers").select("*").eq("room_id", room.id),
-    ]);
+  const [
+    { data: memberRows },
+    { data: questionRows },
+    { data: answerRows },
+    { data: eventRows },
+    { data: stateRow },
+  ] = await Promise.all([
+    db.from("members").select("*").eq("room_id", room.id).order("joined_at"),
+    db.from("questions").select("*").eq("room_id", room.id).order("slot"),
+    db.from("answers").select("*").eq("room_id", room.id),
+    // Oldest first: the ticker and the live screen both read this as an append
+    // only list.
+    db.from("match_events").select("*").eq("fixture_id", room.fixture.id).order("id"),
+    db.from("match_state").select("*").eq("fixture_id", room.fixture.id).maybeSingle(),
+  ]);
 
   return {
     room,
     members: ((memberRows as MemberRow[]) ?? []).map(toMember),
     questions: ((questionRows as QuestionRow[]) ?? []).map(toQuestion),
     answers: ((answerRows as AnswerRow[]) ?? []).map(toAnswerRow),
+    events: ((eventRows as MatchEventDbRow[]) ?? []).map(toMatchEventRow),
+    matchState: ((stateRow as { state: MatchState } | null)?.state) ?? null,
+  };
+}
+
+// The columns of match_events we hand to the screens. The row also carries seq
+// and received_at, which nothing on the client reads.
+interface MatchEventDbRow {
+  id: number;
+  kind: string;
+  team: "home" | "away" | null;
+  minute: number | null;
+  phase: string | null;
+}
+
+function toMatchEventRow(row: MatchEventDbRow): MatchEventRow {
+  return {
+    id: row.id,
+    kind: row.kind,
+    team: row.team ?? null,
+    minute: row.minute ?? null,
+    phase: row.phase ?? null,
   };
 }
 
@@ -227,6 +265,11 @@ export async function joinRoom(
   if (!bundle) throw new Error("Room not found");
   if (bundle.room.status !== "open") {
     throw new Error("This room is no longer open to join");
+  }
+  // The status only turns live once the worker sees the feed go in play, so the
+  // clock is the one that closes the door on time.
+  if (Date.now() >= new Date(bundle.room.lockAt).getTime()) {
+    throw new Error("The match has started, this room is closed");
   }
   await addMember(bundle.room.id, input, false);
   const updated = await getRoomBundle(code);
