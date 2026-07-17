@@ -27,8 +27,8 @@
   --shadow-paper: 0 2px 0 rgba(0, 0, 0, 0.35);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
-  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --font-display: var(--font-bungee), "Arial Narrow", sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-courier), "Courier New", monospace;
 }
 
@@ -87,7 +87,9 @@ h3,
 .display {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: 0.02em;
+  /* Bungee carries its own width; keep it tight and let it own the letterform */
+  letter-spacing: 0;
+  line-height: 1.05;
   text-transform: uppercase;
   text-wrap: balance;
   margin: 0;
