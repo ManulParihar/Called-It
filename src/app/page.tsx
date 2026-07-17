@@ -10,25 +10,36 @@ import { MASCOTS } from "@/lib/mascots";
 import { MascotAvatar } from "@/components/MascotAvatar";
 import { useProfile } from "@/hooks/useProfile";
 
+// Only follow same origin paths, so the next param can never bounce a player off
+// the site.
+function safeNext(value: string | null): string {
+  return value && value.startsWith("/") ? value : "/lobby";
+}
+
 export default function SignInPage() {
   const router = useRouter();
   const { profile, ready, save } = useProfile();
   const [name, setName] = useState("");
   const [mascotId, setMascotId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [next, setNext] = useState("/lobby");
 
-  // The lobby links back here with #edit so a player can change their fighter.
+  // Read where to go after sign in and whether we arrived to edit. Both come
+  // straight off the url so there is no need for a suspense boundary.
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setNext(safeNext(params.get("next")));
     if (window.location.hash === "#edit") setEditing(true);
   }, []);
 
-  // Returning players go straight to the lobby unless they came to edit.
+  // Returning players go straight on unless they came to edit. When a next
+  // destination is set that wins over the lobby, so testers land back on it.
   useEffect(() => {
     if (ready && profile && !editing) {
       if (window.location.hash === "#edit") return;
-      router.replace("/lobby");
+      router.replace(next);
     }
-  }, [ready, profile, editing, router]);
+  }, [ready, profile, editing, router, next]);
 
   // Prefill when editing an existing profile.
   useEffect(() => {
@@ -45,7 +56,7 @@ export default function SignInPage() {
   function enter() {
     if (!canEnter || !mascotId) return;
     save(name.trim(), mascotId);
-    router.push("/lobby");
+    router.push(next);
   }
 
   return (

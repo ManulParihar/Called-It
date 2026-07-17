@@ -43,12 +43,19 @@ export function saveProfile(displayName: string, mascotId: string): Profile {
   return profile;
 }
 
+// Forgets the stored identity so the next sign in mints a fresh userId. Used by
+// the testing tools to join a room as a different person from one browser.
+export function clearProfile(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 // Returns the stored profile once the browser is ready. `ready` goes true
 // after the first read so screens can wait before redirecting.
 export function useProfile(): {
   profile: Profile | null;
   ready: boolean;
   save: (displayName: string, mascotId: string) => Profile;
+  reset: () => void;
 } {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
@@ -64,5 +71,10 @@ export function useProfile(): {
     return next;
   }, []);
 
-  return { profile, ready, save };
+  const reset = useCallback(() => {
+    clearProfile();
+    setProfile(null);
+  }, []);
+
+  return { profile, ready, save, reset };
 }
