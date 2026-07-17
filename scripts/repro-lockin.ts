@@ -27,6 +27,7 @@ async function main(): Promise<void> {
     fixtureId: "fx-sample",
     teamA: "home",
     wagerType: "forfeit",
+    stakeUsd: 0,
     payoutMode: "winner_takes_all",
     forfeitText: "buys the pizza",
   });
