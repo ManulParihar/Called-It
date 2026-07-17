@@ -35,10 +35,20 @@ You need the Solana and Anchor toolchains. They are not part of the web app.
 4. Build and deploy:
    - `anchor build`
    - `anchor deploy`
-5. Copy the generated IDL from `target/idl/called_it_pool.json` into the web app
-   so the client can call the program.
+5. Point the web app at the deployed program. The app builds the instructions
+   itself, so there is no IDL to copy. Set these in `.env.local`:
+   - `NEXT_PUBLIC_POOL_PROGRAM_ID` the deployed program id from step 3.
+   - `NEXT_PUBLIC_SETTLEMENT_PUBKEY` the public key of the settlement authority.
+   - `SETTLEMENT_AUTHORITY_SECRET` the matching secret key, base58 or a JSON byte
+     array. Server only.
+6. Check it end to end on devnet with `npm run escrow:devnet`. It stakes from two
+   throwaway keypairs, then pays the pot out and confirms the vault emptied.
 
 ## Notes
+
+Until the three variables above are set, the app runs the pot in mock mode: the
+game plays through and logs the payout without any on chain transaction, which is
+enough for local testing.
 
 The settlement key is a backend keypair. Keep its secret in the server
 environment as `SETTLEMENT_AUTHORITY_SECRET`. In this version the backend is

@@ -14,7 +14,8 @@
     "worker": "tsx src/server/worker/run.ts",
     "worker:local": "LOCAL_DB=1 tsx src/server/worker/run.ts",
     "seed": "tsx scripts/seed.ts",
-    "seed:local": "LOCAL_DB=1 tsx scripts/seed.ts"
+    "seed:local": "LOCAL_DB=1 tsx scripts/seed.ts",
+    "escrow:devnet": "tsx scripts/escrow-devnet.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
