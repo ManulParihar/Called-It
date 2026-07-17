@@ -259,5 +259,11 @@ export async function submitAnswers(
   const { error } = await db
     .from("answers")
     .upsert(rows, { onConflict: "member_id,question_id" });
-  if (error) throw new Error("Could not save your answers");
+  if (error) {
+    // Log the underlying database error so the server terminal shows the real
+    // cause. A common one is the answers table missing its unique
+    // (member_id, question_id) constraint, which the upsert relies on.
+    console.error("submitAnswers upsert failed:", error);
+    throw new Error("Could not save your answers");
+  }
 }
