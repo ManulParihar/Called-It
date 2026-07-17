@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { submitAnswers } from "@/lib/api";
 import type { Member, RoomBundle, Swipe } from "@/lib/types";
 import { SwipeDeck } from "./SwipeDeck";
+import { DribbleLoader } from "./DribbleLoader";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 
@@ -160,7 +161,13 @@ export function PredictScreen({
               onClick={lockIn}
               disabled={busy}
             >
-              {busy ? "Stamping…" : "Stamp it"}
+              {busy ? (
+                <>
+                  <DribbleLoader size="inline" /> Stamping…
+                </>
+              ) : (
+                "Stamp it"
+              )}
             </button>
           </div>
         </motion.section>

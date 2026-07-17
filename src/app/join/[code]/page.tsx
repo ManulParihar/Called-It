@@ -10,6 +10,7 @@ import { getRoom, joinRoom, setRoomPool } from "@/lib/api";
 import type { RoomBundle } from "@/lib/types";
 import { potCents } from "@/lib/live";
 import { MascotAvatar } from "@/components/MascotAvatar";
+import { DribbleLoader } from "@/components/DribbleLoader";
 import { useProfile } from "@/hooks/useProfile";
 import { useAppWallet } from "@/lib/wallet/WalletProvider";
 import { depositToPool } from "@/lib/wallet/deposit";
@@ -90,9 +91,9 @@ export default function JoinPage({ params }: { params: { code: string } }) {
 
       {error && <p className="error-line">{error}</p>}
       {!bundle && !error && (
-        <p className="muted" style={{ textAlign: "center" }}>
-          Finding the room…
-        </p>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 24 }}>
+          <DribbleLoader size="page" label="Finding the room…" />
+        </div>
       )}
 
       {bundle && room && (
@@ -165,7 +166,13 @@ export default function JoinPage({ params }: { params: { code: string } }) {
           <div style={{ marginTop: "auto" }}>
             {joinable ? (
               <button className="btn" disabled={busy} onClick={join}>
-                {busy ? "Joining…" : "Count me in"}
+                {busy ? (
+                  <>
+                    <DribbleLoader size="inline" /> Joining…
+                  </>
+                ) : (
+                  "Count me in"
+                )}
               </button>
             ) : (
               <p className="error-line">

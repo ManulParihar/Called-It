@@ -16,6 +16,7 @@ import { LiveScreen } from "@/components/LiveScreen";
 import { FullTimeScreen } from "@/components/FullTimeScreen";
 import { Referee } from "@/components/Referee";
 import { DevBar } from "@/components/DevBar";
+import { DribbleLoader } from "@/components/DribbleLoader";
 
 const DEV_TOOLS = process.env.NODE_ENV !== "production";
 
@@ -60,7 +61,7 @@ export default function RoomPage({ params }: { params: { code: string } }) {
     if (!bundle || !me) {
       return (
         <main style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <p className="muted">Opening the room…</p>
+          <DribbleLoader size="page" label="Opening the room…" />
         </main>
       );
     }
