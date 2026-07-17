@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { MASCOTS } from "@/lib/mascots";
 import { MascotAvatar } from "@/components/MascotAvatar";
 import { useProfile } from "@/hooks/useProfile";
+import { useAppWallet } from "@/lib/wallet/WalletProvider";
 
 // Only follow same origin paths, so the next param can never bounce a player off
 // the site.
@@ -19,10 +20,13 @@ function safeNext(value: string | null): string {
 export default function SignInPage() {
   const router = useRouter();
   const { profile, ready, save } = useProfile();
+  const { wallet } = useAppWallet();
   const [name, setName] = useState("");
   const [mascotId, setMascotId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [next, setNext] = useState("/lobby");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Read where to go after sign in and whether we arrived to edit. Both come
   // straight off the url so there is no need for a suspense boundary.
@@ -53,10 +57,20 @@ export default function SignInPage() {
 
   const canEnter = name.trim().length > 0 && mascotId !== null;
 
-  function enter() {
-    if (!canEnter || !mascotId) return;
-    save(name.trim(), mascotId);
-    router.push(next);
+  async function enter() {
+    if (!canEnter || !mascotId || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      // Sign in through Solana: make sure a wallet is connected, then keep its
+      // address on the profile so money rooms can take a deposit.
+      const address = (await wallet.connect()) ?? wallet.publicKey;
+      save(name.trim(), mascotId, address);
+      router.push(next);
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
   }
 
   return (
@@ -151,9 +165,10 @@ export default function SignInPage() {
       </section>
 
       <div style={{ marginTop: "auto" }}>
-        <motion.div whileTap={canEnter ? { scale: 0.97 } : {}}>
-          <button className="btn btn-lime" disabled={!canEnter} onClick={enter}>
-            Step into the ring
+        {error && <p className="error-line" style={{ marginBottom: 8 }}>{error}</p>}
+        <motion.div whileTap={canEnter && !busy ? { scale: 0.97 } : {}}>
+          <button className="btn btn-lime" disabled={!canEnter || busy} onClick={enter}>
+            {busy ? "Setting up your wallet…" : "Step into the ring"}
           </button>
         </motion.div>
       </div>
