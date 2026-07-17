@@ -71,3 +71,23 @@ export function submitAnswers(
     body: JSON.stringify({ memberId, answers }),
   });
 }
+
+export interface SimulateResult {
+  processed: number;
+  remaining: number;
+  done: boolean;
+  phase: string;
+  status: string;
+}
+
+// Testing only. Advances a room through the recorded match. Runs a few events
+// at a time, or everything left when toEnd is set.
+export function simulateRoom(
+  code: string,
+  body: { steps?: number; toEnd?: boolean },
+): Promise<SimulateResult> {
+  return request(`/api/rooms/${encodeURIComponent(code)}/simulate`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
