@@ -136,7 +136,7 @@ export default function JoinPage({ params }: { params: { code: string } }) {
                   key={m.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 * i, duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                  transition={{ delay: 0.025 * i, duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
                   style={{
                     display: "flex",
                     flexDirection: "column",

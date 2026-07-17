@@ -56,7 +56,7 @@ export default function LobbyPage() {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.06 }}
+        transition={{ duration: 0.28, ease: EASE }}
         className="card"
         style={{ textAlign: "center", padding: "26px 16px" }}
       >
@@ -74,7 +74,7 @@ export default function LobbyPage() {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.12 }}
+        transition={{ duration: 0.28, ease: EASE }}
         className="card"
         style={{ display: "flex", flexDirection: "column", gap: 12 }}
       >

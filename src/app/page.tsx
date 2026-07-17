@@ -97,7 +97,7 @@ export default function SignInPage() {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.06 }}
+        transition={{ duration: 0.28, ease: EASE }}
       >
         <p className="eyebrow" style={{ marginBottom: 8 }}>
           Pick your club
@@ -116,7 +116,7 @@ export default function SignInPage() {
                 key={m.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 + 0.04 * i, duration: 0.25, ease: EASE }}
+                transition={{ delay: 0.02 * i, duration: 0.22, ease: EASE }}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => setMascotId(m.id)}
                 aria-pressed={on}
@@ -153,7 +153,7 @@ export default function SignInPage() {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.12 }}
+        transition={{ duration: 0.28, ease: EASE }}
         style={{ display: "flex", flexDirection: "column", gap: 8 }}
       >
         <label className="eyebrow" htmlFor="slip-name">
@@ -177,7 +177,7 @@ export default function SignInPage() {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: EASE, delay: 0.18 }}
+        transition={{ duration: 0.28, ease: EASE }}
         aria-hidden
       >
         <div className="slip" style={{ padding: "12px 14px", fontSize: 12 }}>

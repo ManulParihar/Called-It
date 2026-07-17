@@ -84,7 +84,7 @@ export function FullTimeScreen({
         <motion.p
           initial={{ scale: 0.92, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", duration: 0.45, bounce: 0.35 }}
+          transition={{ type: "spring", duration: 0.4, bounce: 0.35 }}
           className="display"
           style={{
             marginTop: 8,
@@ -110,7 +110,7 @@ export function FullTimeScreen({
               key={w.memberId}
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 + i * 0.08, type: "spring", duration: 0.5, bounce: 0.3 }}
+              transition={{ delay: i * 0.06, type: "spring", duration: 0.45, bounce: 0.3 }}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
             >
               <MascotAvatar mascotId={w.mascotId} size={72} />
@@ -129,7 +129,7 @@ export function FullTimeScreen({
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.3, ease: EASE }}
+          transition={{ duration: 0.28, ease: EASE }}
         >
           <div
             className="slip"
@@ -156,7 +156,7 @@ export function FullTimeScreen({
             <motion.span
               initial={{ scale: 2, opacity: 0, rotate: 4 }}
               animate={{ scale: 1, opacity: 1, rotate: -8 }}
-              transition={{ delay: 0.75, duration: 0.22, ease: EASE }}
+              transition={{ delay: 0.28, duration: 0.22, ease: EASE }}
               className="stamp"
               aria-hidden
               style={{
