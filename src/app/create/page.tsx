@@ -6,12 +6,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { createRoom, listFixtures } from "@/lib/api";
+import { createRoom, listFixtures, setRoomPool } from "@/lib/api";
 import type { Fixture, PayoutMode, WagerType } from "@/lib/types";
 import type { TeamSide } from "@/lib/match";
 import { DEFAULT_FORFEITS } from "@/lib/forfeits";
 import { StakeRoller } from "@/components/StakeRoller";
 import { useProfile } from "@/hooks/useProfile";
+import { useAppWallet } from "@/lib/wallet/WalletProvider";
+import { createPoolAndDeposit } from "@/lib/wallet/deposit";
 
 const PAYOUT_LABELS: Record<PayoutMode, string> = {
   winner_takes_all: "Winner takes all",
@@ -31,6 +33,7 @@ function kickoffLabel(iso: string): string {
 export default function CreateRoomPage() {
   const router = useRouter();
   const { profile, ready } = useProfile();
+  const { wallet } = useAppWallet();
 
   const [step, setStep] = useState(0);
   const [fixtures, setFixtures] = useState<Fixture[] | null>(null);
@@ -81,7 +84,21 @@ export default function CreateRoomPage() {
         stakeUsd: wagerType === "money" ? stakeUsd : 0,
         payoutMode,
         forfeitText: wagerType === "forfeit" ? forfeitText : null,
+        walletAddress: profile.walletAddress,
       });
+
+      // Money rooms open a pool and take the creator's stake before the room is
+      // shown, so the pot is live from the first player.
+      if (wagerType === "money") {
+        const creator = bundle.members[0];
+        const deposit = await createPoolAndDeposit(bundle.room, wallet);
+        await setRoomPool(bundle.room.code, {
+          memberId: creator.id,
+          poolAddress: deposit.poolAddress,
+          walletAddress: profile.walletAddress,
+        });
+      }
+
       router.push(`/room/${bundle.room.code}`);
     } catch (err) {
       setError((err as Error).message);

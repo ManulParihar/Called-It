@@ -59,6 +59,13 @@ export const joinRoomSchema = z.object({
 });
 export type JoinRoomInput = z.infer<typeof joinRoomSchema>;
 
+export const setRoomPoolSchema = z.object({
+  memberId: z.string().min(1),
+  poolAddress: z.string().nullish(),
+  walletAddress: z.string().nullish(),
+});
+export type SetRoomPoolInput = z.infer<typeof setRoomPoolSchema>;
+
 export const submitAnswersSchema = z.object({
   memberId: z.string().min(1),
   answers: z
@@ -222,6 +229,44 @@ export async function joinRoom(
     throw new Error("This room is no longer open to join");
   }
   await addMember(bundle.room.id, input, false);
+  const updated = await getRoomBundle(code);
+  if (!updated) throw new Error("Room not found");
+  return updated;
+}
+
+// Records the on chain pool for a money room and marks one member as having put
+// their stake in. The creator saves the pool address here after opening it; each
+// joiner calls it after their deposit lands. In mock mode the pool address is
+// null and this just tracks who is in the pot.
+export async function setRoomPool(
+  code: string,
+  input: SetRoomPoolInput,
+): Promise<RoomBundle> {
+  const db = serverDb();
+  const bundle = await getRoomBundle(code);
+  if (!bundle) throw new Error("Room not found");
+  if (bundle.room.wagerType !== "money") {
+    throw new Error("This room has no money pot");
+  }
+  const member = bundle.members.find((m) => m.id === input.memberId);
+  if (!member) throw new Error("You are not a member of this room");
+
+  if (input.poolAddress) {
+    const { error } = await db
+      .from("rooms")
+      .update({ pool_address: input.poolAddress })
+      .eq("id", bundle.room.id);
+    if (error) throw new Error("Could not save the pool address");
+  }
+
+  const memberPatch: Record<string, unknown> = { deposit_state: "deposited" };
+  if (input.walletAddress) memberPatch.wallet_address = input.walletAddress;
+  const { error: memberError } = await db
+    .from("members")
+    .update(memberPatch)
+    .eq("id", input.memberId);
+  if (memberError) throw new Error("Could not record your deposit");
+
   const updated = await getRoomBundle(code);
   if (!updated) throw new Error("Room not found");
   return updated;

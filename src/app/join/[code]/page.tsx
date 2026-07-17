@@ -6,16 +6,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { getRoom, joinRoom } from "@/lib/api";
+import { getRoom, joinRoom, setRoomPool } from "@/lib/api";
 import type { RoomBundle } from "@/lib/types";
 import { potCents } from "@/lib/live";
 import { MascotAvatar } from "@/components/MascotAvatar";
 import { useProfile } from "@/hooks/useProfile";
+import { useAppWallet } from "@/lib/wallet/WalletProvider";
+import { depositToPool } from "@/lib/wallet/deposit";
 
 export default function JoinPage({ params }: { params: { code: string } }) {
   const code = decodeURIComponent(params.code).toUpperCase();
   const router = useRouter();
   const { profile, ready } = useProfile();
+  const { wallet } = useAppWallet();
   const [bundle, setBundle] = useState<RoomBundle | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,11 +50,26 @@ export default function JoinPage({ params }: { params: { code: string } }) {
     setBusy(true);
     setError(null);
     try {
-      await joinRoom(code, {
+      const updated = await joinRoom(code, {
         userId: profile.userId,
         displayName: profile.displayName,
         mascotId: profile.mascotId,
+        walletAddress: profile.walletAddress,
       });
+
+      // Money rooms take the stake before letting the player in, then record the
+      // deposit so the pot and the leaderboard know they are covered.
+      if (updated.room.wagerType === "money") {
+        const me = updated.members.find((m) => m.userId === profile.userId);
+        if (me) {
+          await depositToPool(updated.room, wallet);
+          await setRoomPool(code, {
+            memberId: me.id,
+            walletAddress: profile.walletAddress,
+          });
+        }
+      }
+
       router.push(`/room/${code}`);
     } catch (err) {
       setError((err as Error).message);

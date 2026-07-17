@@ -56,6 +56,20 @@ export function joinRoom(code: string, body: JoinRoomBody): Promise<RoomBundle> 
   });
 }
 
+export interface SetPoolBody {
+  memberId: string;
+  poolAddress?: string | null;
+  walletAddress?: string | null;
+}
+
+// Records the pool address on a money room and marks a member as deposited.
+export function setRoomPool(code: string, body: SetPoolBody): Promise<RoomBundle> {
+  return request(`/api/rooms/${encodeURIComponent(code)}/pool`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export interface AnswerInput {
   questionId: string;
   choice: Swipe;
