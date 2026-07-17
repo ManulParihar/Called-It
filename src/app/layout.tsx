@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Bungee, Rubik } from "next/font/google";
 import "./globals.css";
+import { WalletProviders } from "@/lib/wallet/WalletProvider";
 
 // Bungee for the big shouty headings, Rubik for everything readable.
 const bungee = Bungee({
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${bungee.variable} ${rubik.variable}`}>
       <body>
-        <div className="shell">{children}</div>
+        <WalletProviders>
+          <div className="shell">{children}</div>
+        </WalletProviders>
       </body>
     </html>
   );
