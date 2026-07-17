@@ -182,7 +182,7 @@ async function settleRoom(db: SupabaseClient, room: Room): Promise<void> {
   if (room.wagerType === "money") {
     const potCents = room.stakeUsd * members.length * 100;
     const payouts = computePayouts(room.payoutMode, leaderboard, potCents);
-    await settleMoneyRoom(room, leaderboard, payouts);
+    await settleMoneyRoom(room, members, payouts);
     const paidIds = new Set(payouts.filter((p) => p.amountCents > 0).map((p) => p.memberId));
     for (const member of members) {
       if (paidIds.has(member.id)) {
@@ -197,7 +197,7 @@ async function settleRoom(db: SupabaseClient, room: Room): Promise<void> {
 async function cancelRoom(db: SupabaseClient, room: Room): Promise<void> {
   const { members } = await loadMembersAndAnswers(db, room);
   if (room.wagerType === "money") {
-    await refundRoom(room, members.map((m) => m.id)).catch(() => undefined);
+    await refundRoom(room, members).catch(() => undefined);
     for (const member of members) {
       await db.from("members").update({ deposit_state: "refunded" }).eq("id", member.id);
     }
