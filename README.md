@@ -64,10 +64,28 @@ migrations on every push to `main`.
 5. Seed a couple of fixtures with `npm run seed`.
 6. Run the match worker with `npm run worker`.
 
+## Local mode without Supabase
+
+For quick testing you can run the whole app with no hosted database at all. In
+this mode every table is kept in a single JSON file, `.local-db.json`, that all
+the processes share. Realtime is turned off, so the room screens fall back to
+polling, which is enough to watch a game move.
+
+1. Seed the fixtures into the local file with `npm run seed:local`.
+2. Start the app with `npm run local`.
+3. Replay a match with `npm run worker:local`.
+
+Delete `.local-db.json` any time you want a clean slate. The file is ignored by
+git so it never gets committed.
+
 ## Scripts
 
 - `npm run dev` - start the app in development.
+- `npm run local` - start the app in local mode, backed by a JSON file.
 - `npm run build` - build for production.
 - `npm run typecheck` - type check without emitting files.
 - `npm run test` - run the unit tests.
 - `npm run worker` - run the TxLINE match worker.
+- `npm run worker:local` - run the match worker against the local JSON file.
+- `npm run seed` - add sample fixtures to Supabase.
+- `npm run seed:local` - add sample fixtures to the local JSON file.
