@@ -4,6 +4,7 @@ import { Bungee, Inter, Courier_Prime } from "next/font/google";
 import "./globals.css";
 import { WalletProviders } from "@/lib/wallet/WalletProvider";
 import { MotionRoot } from "@/components/MotionRoot";
+import { SoundToggle } from "@/components/SoundToggle";
 
 // Bungee for the arcade-sign headlines, Courier Prime for everything printed on
 // a slip, Inter for the readable in-between.
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <WalletProviders>
           <MotionRoot>
             <div className="shell">{children}</div>
+            <SoundToggle />
           </MotionRoot>
         </WalletProviders>
       </body>
