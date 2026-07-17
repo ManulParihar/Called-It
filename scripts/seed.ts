@@ -24,6 +24,7 @@ async function main(): Promise<void> {
       home_team: "Brazil",
       away_team: "Argentina",
       kickoff_at: hoursFromNow(1),
+      kind: "live",
     },
     {
       id: "fx-demo-2",
@@ -31,6 +32,7 @@ async function main(): Promise<void> {
       home_team: "France",
       away_team: "England",
       kickoff_at: hoursFromNow(3),
+      kind: "live",
     },
   ];
 

@@ -1,18 +1,20 @@
-// Reads fixtures that a room can be built around.
+// Reads fixtures that the create screen offers.
 
 import type { Fixture } from "../lib/types";
 import { serverDb } from "./db/supabase";
 import { toFixture, type FixtureRow } from "./db/mappers";
 
-// Upcoming fixtures, soonest first. Past kickoffs are left out so the create
-// screen only offers matches that can still be played.
-export async function getUpcomingFixtures(limit = 20): Promise<Fixture[]> {
+// Fixtures a room can actually be built on: the live matches and the recorded
+// replays. Newest kickoff first, so today's live matches sit above older
+// replays. Past kickoffs are kept here on purpose, since a replay is a match
+// that has already happened.
+export async function getPlayableFixtures(limit = 30): Promise<Fixture[]> {
   const db = serverDb();
   const { data } = await db
     .from("fixtures")
     .select("*")
-    .gte("kickoff_at", new Date().toISOString())
-    .order("kickoff_at", { ascending: true })
+    .in("kind", ["live", "replay"])
+    .order("kickoff_at", { ascending: false })
     .limit(limit);
   return ((data as FixtureRow[]) ?? []).map(toFixture);
 }

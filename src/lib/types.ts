@@ -28,6 +28,12 @@ export type Swipe = "yes" | "no";
 // How a question turned out once the match resolves it.
 export type QuestionOutcome = "pending" | "yes" | "no" | "void";
 
+// What a fixture is for in the picker.
+//   live     a match you can open a room on right now
+//   replay   a real past match, replayed from its recorded timeline for testing
+//   upcoming a future match shown for flavour only, not playable yet
+export type FixtureKind = "live" | "replay" | "upcoming";
+
 // The two teams in the fixture.
 export interface Fixture {
   id: string;
@@ -35,6 +41,10 @@ export interface Fixture {
   homeTeam: string;
   awayTeam: string;
   kickoffAt: string;
+  kind: FixtureKind;
+  // The TxLINE fixture id a replay or upcoming match came from, when it came
+  // from the feed rather than the seed.
+  txFixtureId?: string;
 }
 
 export interface Room {

@@ -7,6 +7,7 @@ import type {
   Answer,
   DepositState,
   Fixture,
+  FixtureKind,
   Member,
   PayoutMode,
   Question,
@@ -23,6 +24,10 @@ export interface FixtureRow {
   home_team: string;
   away_team: string;
   kickoff_at: string;
+  // Older rows and the local file db may not carry these, so both are optional
+  // and default when read.
+  kind?: FixtureKind | null;
+  tx_fixture_id?: string | null;
 }
 
 export interface RoomRow {
@@ -81,6 +86,8 @@ export function toFixture(row: FixtureRow): Fixture {
     homeTeam: row.home_team,
     awayTeam: row.away_team,
     kickoffAt: row.kickoff_at,
+    kind: row.kind ?? "live",
+    txFixtureId: row.tx_fixture_id ?? undefined,
   };
 }
 
