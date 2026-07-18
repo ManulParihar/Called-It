@@ -45,6 +45,7 @@ export function FullTimeScreen({
     if (room.wagerType !== "money") return undefined;
     return new Map(projectedPayouts(bundle).map((p) => [p.memberId, p.amountCents]));
   }, [bundle, room.wagerType]);
+  const myPayoutCents = payouts?.get(me.id) ?? 0;
 
   // One burst of confetti as the curtain drops, a bigger one if you won.
   useEffect(() => {
@@ -187,6 +188,12 @@ export function FullTimeScreen({
         </section>
       )}
 
+      {/* Payout is sent automatically the moment the match settles — there is
+          no claim step. This is the only place a player can see whether their
+          own transfer actually landed, since a missing wallet or a failed
+          transaction otherwise fails silently on the server. */}
+      {!forfeitRoom && myPayoutCents > 0 && <PayoutStatus me={me} amountCents={myPayoutCents} />}
+
       <section>
         <p className="eyebrow" style={{ marginBottom: 8 }}>
           Final standings
@@ -200,5 +207,47 @@ export function FullTimeScreen({
         </Link>
       </div>
     </main>
+  );
+}
+
+// Winnings are pushed to a player's wallet automatically as soon as the match
+// settles — there's no button to press. This is the only confirmation a
+// winner gets that the transfer actually landed, since a missing wallet
+// address or a failed on-chain transaction otherwise fails silently.
+function PayoutStatus({ me, amountCents }: { me: Member; amountCents: number }) {
+  const amount = `$${(amountCents / 100).toFixed(2)}`;
+
+  if (me.depositState === "paid") {
+    return (
+      <section
+        className="card"
+        style={{ textAlign: "center", borderColor: "rgba(69,178,107,0.5)" }}
+      >
+        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--grass)" }}>
+          {amount} sent to your wallet
+        </p>
+        {me.walletAddress && (
+          <p className="muted" style={{ fontSize: 11, marginTop: 2 }}>
+            {me.walletAddress.slice(0, 4)}…{me.walletAddress.slice(-4)}
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="card"
+      style={{ textAlign: "center", borderColor: "rgba(240,89,74,0.5)" }}
+    >
+      <p style={{ fontSize: 12, fontWeight: 700, color: "var(--stamp-bright)" }}>
+        {me.walletAddress
+          ? `${amount} payout didn't go through`
+          : `You're owed ${amount}, but no wallet is on file`}
+      </p>
+      <p className="muted" style={{ fontSize: 11, marginTop: 2 }}>
+        Let the host know — they can resettle once it's sorted.
+      </p>
+    </section>
   );
 }

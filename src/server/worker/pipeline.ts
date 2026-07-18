@@ -182,8 +182,12 @@ async function settleRoom(db: SupabaseClient, room: Room): Promise<void> {
   if (room.wagerType === "money") {
     const potCents = room.stakeUsd * members.length * 100;
     const payouts = computePayouts(room.payoutMode, leaderboard, potCents);
-    await settleMoneyRoom(room, members, payouts);
-    const paidIds = new Set(payouts.filter((p) => p.amountCents > 0).map((p) => p.memberId));
+    const result = await settleMoneyRoom(room, members, payouts);
+    // Only mark members who actually received a transfer. A member can be
+    // owed money and still miss out here if they had no wallet on file or
+    // the settlement transaction failed outright; deposit_state should
+    // reflect that instead of assuming every entitled member got paid.
+    const paidIds = new Set(result.paidMemberIds);
     for (const member of members) {
       if (paidIds.has(member.id)) {
         await db.from("members").update({ deposit_state: "paid" }).eq("id", member.id);
@@ -197,8 +201,12 @@ async function settleRoom(db: SupabaseClient, room: Room): Promise<void> {
 async function cancelRoom(db: SupabaseClient, room: Room): Promise<void> {
   const { members } = await loadMembersAndAnswers(db, room);
   if (room.wagerType === "money") {
-    await refundRoom(room, members).catch(() => undefined);
+    const result = await refundRoom(room, members).catch(
+      () => ({ ok: false, signatures: [], paidMemberIds: [] }) as const,
+    );
+    const refundedIds = new Set(result.paidMemberIds);
     for (const member of members) {
+      if (!refundedIds.has(member.id)) continue;
       await db.from("members").update({ deposit_state: "refunded" }).eq("id", member.id);
     }
   }
