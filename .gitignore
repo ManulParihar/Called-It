@@ -23,6 +23,9 @@ next-env.d.ts
 /anchor/target
 /anchor/.anchor
 test-ledger
+*-wallet.json
+sol-devnet-wallet.json
+/.secrets
 
 # misc
 .DS_Store
