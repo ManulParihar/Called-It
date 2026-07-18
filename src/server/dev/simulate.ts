@@ -17,9 +17,15 @@ import type { Fixture } from "../../lib/types";
 
 const SAMPLE_LOG = "data/sample-match.jsonl";
 
-// The testing tools should never be reachable in a real deployment.
+// The testing tools should never be reachable in a real deployment. The one
+// exception is a hackathon/judge deployment, where nobody can rely on a real
+// match being live: NEXT_PUBLIC_ENABLE_DEV_TOOLS opts a specific hosted build
+// into exposing them anyway.
 export function devToolsEnabled(): boolean {
-  return process.env.NODE_ENV !== "production";
+  return (
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === "1"
+  );
 }
 
 // Picks the recorded timeline to replay for a fixture. A replay fixture pulled

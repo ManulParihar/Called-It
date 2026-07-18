@@ -25,7 +25,11 @@ import { useAppWallet } from "@/lib/wallet/WalletProvider";
 import { MomentRing } from "@/components/MomentRing";
 import { WalletPanel } from "@/components/WalletPanel";
 
-const DEV_TOOLS_ENABLED = process.env.NODE_ENV !== "production";
+// Kept in sync with the same check the /simulate route makes server side
+// (src/server/dev/simulate.ts) so the button only shows when it will work.
+const DEV_TOOLS_ENABLED =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === "1";
 
 // The beat between moments. Matches the countdown ring's default duration.
 const GAP_MS = 3000;
