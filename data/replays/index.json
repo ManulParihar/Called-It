@@ -1,0 +1,42 @@
+[
+  {
+    "id": "tx-18241006",
+    "txFixtureId": "18241006",
+    "competition": "World Cup",
+    "homeTeam": "England",
+    "awayTeam": "Argentina",
+    "kickoffAt": "2026-07-15T19:00:00.000Z"
+  },
+  {
+    "id": "tx-18237038",
+    "txFixtureId": "18237038",
+    "competition": "World Cup",
+    "homeTeam": "France",
+    "awayTeam": "Spain",
+    "kickoffAt": "2026-07-14T19:00:00.000Z"
+  },
+  {
+    "id": "tx-18222446",
+    "txFixtureId": "18222446",
+    "competition": "World Cup",
+    "homeTeam": "Argentina",
+    "awayTeam": "Switzerland",
+    "kickoffAt": "2026-07-12T01:00:00.000Z"
+  },
+  {
+    "id": "tx-18213979",
+    "txFixtureId": "18213979",
+    "competition": "World Cup",
+    "homeTeam": "Norway",
+    "awayTeam": "England",
+    "kickoffAt": "2026-07-11T21:00:00.000Z"
+  },
+  {
+    "id": "tx-18218149",
+    "txFixtureId": "18218149",
+    "competition": "World Cup",
+    "homeTeam": "Spain",
+    "awayTeam": "Belgium",
+    "kickoffAt": "2026-07-10T19:00:00.000Z"
+  }
+]
