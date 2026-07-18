@@ -6,7 +6,7 @@ an upcoming match. As the match plays out, the room reacts live to goals, cards,
 and penalties. At full time a leaderboard shows who called it, and the pot pays
 out or the loser owes the agreed forfeit.
 
-## How a game works
+## How the game works
 
 1. One person creates a room and picks the wager.
    - Money: everyone stakes the same amount into a shared pot.
@@ -32,6 +32,24 @@ talk to TxLINE directly. They read updates from the database in real time.
 The worker can also replay a recorded match log at a chosen speed. This is used
 for demos so a full match can be shown in a couple of minutes without waiting
 for a live fixture.
+
+### TxLINE endpoints used
+
+- `POST /auth/guest/start` - short lived guest token, used to open the score
+  stream and to fetch historical data.
+- `POST /api/token/activate` - exchanges a signed, on chain paid subscription
+  for a persistent API token (`npm run txline:activate`, a one time setup
+  step). This token unlocks the two endpoints below.
+- `GET /api/scores/stream` - a Server-Sent Events stream of live match events.
+  This is the one endpoint the whole live game loop is built on: the worker
+  reads it, resolves questions from it, and every room's live screen is
+  ultimately reflecting this stream.
+- `GET /api/scores/historical/{fixtureId}` - the full event log for a finished
+  match. Used once per match by `npm run pull:replays` to build the recorded
+  fixtures under `data/replays`, so a full match can be replayed on demand
+  instead of waiting for a real kickoff.
+- `GET /api/fixtures/snapshot?startEpochDay=N` - upcoming fixtures, shown as
+  "Coming soon" cards on the create room screen.
 
 ## The pot
 
@@ -75,6 +93,26 @@ migrations on every push to `main`.
 4. Run the app with `npm run dev`.
 5. Seed a couple of fixtures with `npm run seed`.
 6. Run the match worker with `npm run worker`.
+
+## Deploying for judges
+
+The testing tools (New tester / Play / End game, in the settings menu) are
+hidden on any production build by default, since a real deployment shouldn't
+let a visitor drive someone else's match by hand. That also means a plain
+production deploy has no way to advance a room without an actual live fixture
+kicking off at the exact moment someone is testing it - not something a judge
+can rely on.
+
+For a judge facing deployment, set `NEXT_PUBLIC_ENABLE_DEV_TOOLS=1` to bring
+those tools back. Advancing a replay runs as a single API call handled
+in-process by the Next.js server (`src/server/dev/simulate.ts`) - no separate
+always-on worker needs to be hosted for this to work. Then:
+
+1. Run `npm run seed` against the deployed Supabase project. This adds a
+   guaranteed sample replay fixture plus, if `npm run pull:replays` has been
+   run, the real World Cup replays already checked into `data/replays`.
+2. A judge creates (or opens) a room on one of the replay fixtures and uses
+   Play to fast forward the match, or End game to jump straight to full time.
 
 ## Local mode without Supabase
 
