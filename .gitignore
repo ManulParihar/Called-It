@@ -41,3 +41,6 @@ yarn-error.log*
 
 # typescript build cache
 *.tsbuildinfo
+
+# internal doc for demo recording, not for the public repo
+/docs/app-guide.md

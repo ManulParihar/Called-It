@@ -36,9 +36,21 @@ for a live fixture.
 ## The pot
 
 When a room uses money, the stakes go into a Solana escrow program on devnet.
-Players deposit when they join. At full time the backend computes the final
-standings from the match result and asks the program to pay the winners. There
-is also a cancel path that refunds everyone if a match is abandoned.
+A fresh pool account is created for every room. Players deposit when they
+join. At full time the backend computes the final standings from the match
+result and asks the program to pay the winners. There is also a cancel path
+that refunds everyone if a match is abandoned. Until the program id and a
+settlement key are configured, the app runs the pot in mock mode with no on
+chain transactions, so the game is fully playable without Solana set up.
+
+## Wallets
+
+Players sign in with a Privy embedded wallet (email or social login, no
+extension needed). Local testing uses a throwaway browser keypair instead, so
+`NEXT_PUBLIC_PRIVY_APP_ID` can stay blank while developing. Whichever wallet is
+active, its balance and recent activity are visible from the settings menu
+(top right gear icon), each transaction linking out to the Solana block
+explorer.
 
 ## Project layout
 
@@ -82,6 +94,7 @@ git so it never gets committed.
 
 - `npm run dev` - start the app in development.
 - `npm run local` - start the app in local mode, backed by a JSON file.
+- `npm run mobile` - start the app and print a QR code for testing on a phone.
 - `npm run build` - build for production.
 - `npm run typecheck` - type check without emitting files.
 - `npm run test` - run the unit tests.
@@ -89,3 +102,6 @@ git so it never gets committed.
 - `npm run worker:local` - run the match worker against the local JSON file.
 - `npm run seed` - add sample fixtures to Supabase.
 - `npm run seed:local` - add sample fixtures to the local JSON file.
+- `npm run pull:replays` - pull finished matches from TxLINE to replay later.
+- `npm run escrow:devnet` - exercise the pool program on devnet end to end.
+- `npm run txline:activate` - activate a persistent TxLINE API token.
