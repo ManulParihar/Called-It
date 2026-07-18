@@ -27,6 +27,13 @@ export function serverDb(): SupabaseClient {
 
   cached = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    // On a serverless host Next.js patches fetch and caches GET requests by
+    // default, which freezes supabase reads at their first value: a room's
+    // answers or members list would never update after the first load. Force
+    // every request through with no-store so the server always sees live rows.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
   return cached;
 }
