@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "local": "LOCAL_DB=1 NEXT_PUBLIC_LOCAL_DB=1 next dev",
+    "mobile": "node scripts/mobile.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

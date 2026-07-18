@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { MASCOTS } from "@/lib/mascots";
 import { MascotAvatar } from "@/components/MascotAvatar";
+import { DribbleLoader } from "@/components/DribbleLoader";
 import { useProfile } from "@/hooks/useProfile";
 import { useAppWallet } from "@/lib/wallet/WalletProvider";
 
@@ -211,7 +212,13 @@ export default function SignInPage() {
       <div style={{ marginTop: "auto" }}>
         {error && <p className="error-line" style={{ marginBottom: 8 }}>{error}</p>}
         <button className="btn" disabled={!canEnter || busy} onClick={enter}>
-          {busy ? "Sorting your wallet…" : "Get my slip"}
+          {busy ? (
+            <>
+              <DribbleLoader size="inline" /> Sorting your wallet…
+            </>
+          ) : (
+            "Get my slip"
+          )}
         </button>
       </div>
     </main>

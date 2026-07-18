@@ -1,21 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Anton, Archivo, Courier_Prime } from "next/font/google";
+import { Bungee, Inter, Courier_Prime } from "next/font/google";
 import "./globals.css";
 import { WalletProviders } from "@/lib/wallet/WalletProvider";
 import { MotionRoot } from "@/components/MotionRoot";
+import { SoundToggle } from "@/components/SoundToggle";
 
-// Anton for the back-page headlines, Courier Prime for everything printed on
-// a slip, Archivo for the readable in-between.
-const anton = Anton({
+// Bungee for the arcade-sign headlines, Courier Prime for everything printed on
+// a slip, Inter for the readable in-between.
+const bungee = Bungee({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-anton",
+  variable: "--font-bungee",
 });
 
-const archivo = Archivo({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-archivo",
+  variable: "--font-inter",
 });
 
 const courier = Courier_Prime({
@@ -46,12 +47,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${archivo.variable} ${courier.variable}`}
+      className={`${bungee.variable} ${inter.variable} ${courier.variable}`}
     >
       <body>
         <WalletProviders>
           <MotionRoot>
             <div className="shell">{children}</div>
+            <SoundToggle />
           </MotionRoot>
         </WalletProviders>
       </body>

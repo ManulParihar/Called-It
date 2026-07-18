@@ -48,7 +48,7 @@ export function FullTimeScreen({
 
   // One burst of confetti as the curtain drops, a bigger one if you won.
   useEffect(() => {
-    cue(meWon ? "win" : "whistle");
+    cue(meWon ? "win" : meLost ? "lose" : "whistle");
     if (!prefersReducedMotion()) {
       confetti({
         particleCount: meWon ? 220 : 80,

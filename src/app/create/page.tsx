@@ -11,6 +11,7 @@ import type { Fixture, PayoutMode, WagerType } from "@/lib/types";
 import type { TeamSide } from "@/lib/match";
 import { DEFAULT_FORFEITS } from "@/lib/forfeits";
 import { StakeRoller } from "@/components/StakeRoller";
+import { DribbleLoader } from "@/components/DribbleLoader";
 import { useProfile } from "@/hooks/useProfile";
 import { useAppWallet } from "@/lib/wallet/WalletProvider";
 import { createPoolAndDeposit } from "@/lib/wallet/deposit";
@@ -149,7 +150,11 @@ export default function CreateRoomPage() {
         >
           {step === 0 && (
             <>
-              {!fixtures && !error && <p className="muted">Loading fixtures…</p>}
+              {!fixtures && !error && (
+                <div style={{ display: "flex", justifyContent: "center", paddingTop: 16 }}>
+                  <DribbleLoader size="page" label="Loading fixtures…" />
+                </div>
+              )}
               {fixtures?.length === 0 && (
                 <p className="muted">No fixtures yet. Seed some and come back.</p>
               )}
@@ -322,7 +327,13 @@ export default function CreateRoomPage() {
           </button>
         ) : (
           <button className="btn" disabled={!stakesOk || busy} onClick={submit}>
-            {busy ? "Opening the room…" : "Open the room"}
+            {busy ? (
+              <>
+                <DribbleLoader size="inline" /> Opening the room…
+              </>
+            ) : (
+              "Open the room"
+            )}
           </button>
         )}
       </div>
