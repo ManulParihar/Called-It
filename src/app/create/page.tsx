@@ -31,6 +31,109 @@ function kickoffLabel(iso: string): string {
   });
 }
 
+function matchDateLabel(iso: string): string {
+  // "Sat 21 Jun": weekday, day, month, the way a fixture list prints it.
+  return new Date(iso).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function FixtureBadge({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      style={{
+        fontFamily: "var(--font-mono)",
+        fontWeight: 700,
+        fontSize: 10,
+        letterSpacing: "0.14em",
+        color,
+        background: "var(--pitch-3)",
+        border: "1px solid var(--chalk-line)",
+        borderRadius: "var(--radius-sm)",
+        padding: "3px 8px",
+        flexShrink: 0,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function FixtureCard({
+  fixture,
+  selected,
+  onSelect,
+}: {
+  fixture: Fixture;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
+}) {
+  if (fixture.kind === "upcoming") {
+    // Future matches are on the board for flavour only: a plain div, never a
+    // form control, so it cannot be clicked, focused or submitted.
+    return (
+      <div className="card" style={{ opacity: 0.55 }} aria-disabled="true">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <p className="eyebrow" style={{ flex: 1 }}>
+            {fixture.competition}
+          </p>
+          <FixtureBadge label="COMING SOON" color="var(--chalk-dim)" />
+        </div>
+        <p
+          className="display"
+          style={{ fontSize: 18, margin: "6px 0", color: "var(--chalk-dim)" }}
+        >
+          {fixture.homeTeam} <span style={{ color: "var(--chalk-dim)" }}>v</span>{" "}
+          {fixture.awayTeam}
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontWeight: 700,
+            fontSize: 13,
+            letterSpacing: "0.08em",
+            color: "var(--chalk-dim)",
+          }}
+        >
+          {matchDateLabel(fixture.kickoffAt)}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.button
+      whileTap={{ scale: 0.97 }}
+      onClick={() => onSelect?.(fixture.id)}
+      className="card"
+      style={{
+        textAlign: "left",
+        borderColor: selected ? "var(--amber)" : undefined,
+        background: selected ? "var(--pitch-3)" : undefined,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <p className="eyebrow" style={{ flex: 1 }}>
+          {fixture.competition}
+        </p>
+        {fixture.kind === "replay" && (
+          <FixtureBadge label="REPLAY" color="var(--grass)" />
+        )}
+      </div>
+      <p
+        className="display"
+        style={{ fontSize: 18, margin: "6px 0", color: "var(--chalk)" }}
+      >
+        {fixture.homeTeam} <span style={{ color: "var(--amber)" }}>v</span>{" "}
+        {fixture.awayTeam}
+      </p>
+      <p className="muted">Kicks off {kickoffLabel(fixture.kickoffAt)}</p>
+    </motion.button>
+  );
+}
+
 export default function CreateRoomPage() {
   const router = useRouter();
   const { profile, ready } = useProfile();
@@ -69,6 +172,11 @@ export default function CreateRoomPage() {
   const forfeitText = usingCustom ? customForfeit.trim() : forfeitPick;
   const stakesOk =
     wagerType === "money" ? true : forfeitText.length > 0;
+
+  const liveFixtures = fixtures?.filter((f) => f.kind === "live") ?? [];
+  const replayFixtures = fixtures?.filter((f) => f.kind === "replay") ?? [];
+  const upcomingFixtures = fixtures?.filter((f) => f.kind === "upcoming") ?? [];
+  const hasPlayable = liveFixtures.length + replayFixtures.length > 0;
 
   async function submit() {
     if (!profile || !fixtureId || busy) return;
@@ -155,35 +263,43 @@ export default function CreateRoomPage() {
                   <DribbleLoader size="page" label="Loading fixtures…" />
                 </div>
               )}
-              {fixtures?.length === 0 && (
-                <p className="muted">No fixtures yet. Seed some and come back.</p>
+              {fixtures && !hasPlayable && (
+                <p className="muted">No matches to play yet. Seed some and come back.</p>
               )}
-              {fixtures?.map((f) => {
-                const on = fixtureId === f.id;
-                return (
-                  <motion.button
-                    key={f.id}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setFixtureId(f.id)}
-                    className="card"
-                    style={{
-                      textAlign: "left",
-                      borderColor: on ? "var(--amber)" : undefined,
-                      background: on ? "var(--pitch-3)" : undefined,
-                    }}
-                  >
-                    <p className="eyebrow">{f.competition}</p>
-                    <p
-                      className="display"
-                      style={{ fontSize: 18, margin: "6px 0", color: "var(--chalk)" }}
-                    >
-                      {f.homeTeam} <span style={{ color: "var(--amber)" }}>v</span>{" "}
-                      {f.awayTeam}
-                    </p>
-                    <p className="muted">Kicks off {kickoffLabel(f.kickoffAt)}</p>
-                  </motion.button>
-                );
-              })}
+              {liveFixtures.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p className="eyebrow">Live</p>
+                  {liveFixtures.map((f) => (
+                    <FixtureCard
+                      key={f.id}
+                      fixture={f}
+                      selected={fixtureId === f.id}
+                      onSelect={setFixtureId}
+                    />
+                  ))}
+                </div>
+              )}
+              {replayFixtures.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p className="eyebrow">Replays</p>
+                  {replayFixtures.map((f) => (
+                    <FixtureCard
+                      key={f.id}
+                      fixture={f}
+                      selected={fixtureId === f.id}
+                      onSelect={setFixtureId}
+                    />
+                  ))}
+                </div>
+              )}
+              {upcomingFixtures.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <p className="eyebrow">Coming soon</p>
+                  {upcomingFixtures.map((f) => (
+                    <FixtureCard key={f.id} fixture={f} />
+                  ))}
+                </div>
+              )}
             </>
           )}
 
