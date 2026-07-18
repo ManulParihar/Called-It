@@ -1,10 +1,11 @@
 [toolchain]
+solana_version = "3.1.10"
 
 [features]
 resolver = true
 
 [programs.devnet]
-called_it_pool = "Ca11edIt1111111111111111111111111111111111"
+called_it_pool = "mV4Xe9uYS1osszQZiWMTFsQWvotqcqL9dGsNXdMNKFf"
 
 [registry]
 url = "https://api.apr.dev"
