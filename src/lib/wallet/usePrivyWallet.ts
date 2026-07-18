@@ -70,12 +70,21 @@ export function usePrivyWallet(): AppWallet {
   }, [authenticated, login, createWallet]);
 
   const signAndSend = useCallback(
-    async (instructions: TransactionInstruction[]) => {
+    async (instructions: TransactionInstruction[], description?: string) => {
       const owner = wallets[0]?.address;
       if (!owner) throw new Error("Sign in to your wallet first");
       const connection = getConnection();
       const tx = await buildTransaction(connection, new PublicKey(owner), instructions);
-      const receipt = await sendTransaction({ transaction: tx, connection, address: owner });
+      const receipt = await sendTransaction({
+        transaction: tx,
+        connection,
+        address: owner,
+        // Privy can't decode a call into our own escrow program, so without
+        // this the confirmation modal just says "confirm transaction" with no
+        // amount. Passing our own description is the only way to tell the
+        // player what they're actually signing.
+        uiOptions: description ? { description } : undefined,
+      });
       return receipt.signature;
     },
     [wallets, sendTransaction],

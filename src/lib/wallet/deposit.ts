@@ -49,19 +49,22 @@ export async function createPoolAndDeposit(
   const [vault] = deriveVaultPda(programId, pool);
   const stakeLamports = usdToLamports(room.stakeUsd);
 
-  const signature = await wallet.signAndSend([
-    buildCreatePoolIx({
-      programId,
-      creator,
-      pool,
-      vault,
-      roomSeed,
-      stakeLamports,
-      payoutMode: room.payoutMode,
-      settlementAuthority,
-    }),
-    buildJoinPoolIx({ programId, pool, vault, member: creator }),
-  ]);
+  const signature = await wallet.signAndSend(
+    [
+      buildCreatePoolIx({
+        programId,
+        creator,
+        pool,
+        vault,
+        roomSeed,
+        stakeLamports,
+        payoutMode: room.payoutMode,
+        settlementAuthority,
+      }),
+      buildJoinPoolIx({ programId, pool, vault, member: creator }),
+    ],
+    `Stake $${room.stakeUsd} to open ${room.fixture.homeTeam} v ${room.fixture.awayTeam}`,
+  );
 
   return { poolAddress: pool.toBase58(), signature };
 }
@@ -79,9 +82,10 @@ export async function depositToPool(
   const [vault] = deriveVaultPda(programId, pool);
   const member = new PublicKey(await walletAddress(wallet));
 
-  const signature = await wallet.signAndSend([
-    buildJoinPoolIx({ programId, pool, vault, member }),
-  ]);
+  const signature = await wallet.signAndSend(
+    [buildJoinPoolIx({ programId, pool, vault, member })],
+    `Stake $${room.stakeUsd} to join ${room.fixture.homeTeam} v ${room.fixture.awayTeam}`,
+  );
 
   return { poolAddress: room.poolAddress, signature };
 }
