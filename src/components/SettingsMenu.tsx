@@ -1,8 +1,9 @@
 "use client";
 
-// A small menu of testing controls, tucked behind a gear button top-right. It
-// only renders during development, never in a production build, so players
-// never see it. It lets one person drive a whole game from a single browser:
+// A settings menu tucked behind a gear button, top-right. Everyone gets the
+// wallet view — balance and recent activity for whichever wallet backend is
+// active. Outside of a production build it also carries the testing
+// controls that let one person drive a whole game from a single browser:
 //
 //   New tester   forgets this browser's identity and returns to the join
 //                screen, so you can join the same room again as someone else.
@@ -22,13 +23,14 @@ import { simulateRoom } from "@/lib/api";
 import { useProfile } from "@/hooks/useProfile";
 import { useAppWallet } from "@/lib/wallet/WalletProvider";
 import { MomentRing } from "@/components/MomentRing";
+import { WalletPanel } from "@/components/WalletPanel";
 
-const ENABLED = process.env.NODE_ENV !== "production";
+const DEV_TOOLS_ENABLED = process.env.NODE_ENV !== "production";
 
 // The beat between moments. Matches the countdown ring's default duration.
 const GAP_MS = 3000;
 
-export function DevBar({
+export function SettingsMenu({
   code,
   onChanged,
 }: {
@@ -42,7 +44,6 @@ export function DevBar({
   const [note, setNote] = useState<string | null>(null);
   const [ringShow, setRingShow] = useState(false);
   const [ringCycle, setRingCycle] = useState(0);
-  const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
   const stopRef = useRef(false);
@@ -70,18 +71,9 @@ export function DevBar({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
-  if (!ENABLED) return null;
-
   function newTester() {
     reset();
     router.push(`/?next=${encodeURIComponent(`/join/${code}`)}`);
-  }
-
-  async function copyWallet() {
-    if (!wallet.publicKey) return;
-    await navigator.clipboard.writeText(wallet.publicKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   }
 
   // A sleep the End button (or unmount) can cut short.
@@ -158,7 +150,9 @@ export function DevBar({
   return (
     <>
       {/* Shifted left of the gear button so the two never overlap. */}
-      <MomentRing show={ringShow} cycle={ringCycle} seconds={GAP_MS / 1000} right={64} />
+      {DEV_TOOLS_ENABLED && (
+        <MomentRing show={ringShow} cycle={ringCycle} seconds={GAP_MS / 1000} right={64} />
+      )}
 
       <div
         ref={panelRef}
@@ -177,7 +171,7 @@ export function DevBar({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          aria-label="Testing tools"
+          aria-label="Settings"
           whileTap={{ scale: 0.9 }}
           style={{
             display: "flex",
@@ -223,7 +217,9 @@ export function DevBar({
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.16, ease: "easeOut" }}
               style={{
-                width: 240,
+                width: 260,
+                maxHeight: "calc(100vh - 80px)",
+                overflowY: "auto",
                 background: "rgba(8,17,13,0.96)",
                 border: "1px solid var(--chalk-line)",
                 borderRadius: "var(--radius)",
@@ -236,72 +232,61 @@ export function DevBar({
                 boxShadow: "0 6px 20px rgba(0,0,0,0.4)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  fontSize: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "var(--chalk-dim)",
-                }}
-              >
-                <span>Testing tools</span>
-                <span>{note ?? (profile ? `as ${profile.displayName}` : "no player")}</span>
-              </div>
-
-              {wallet.publicKey && (
-                <button
-                  onClick={copyWallet}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    background: "none",
-                    border: "none",
-                    padding: 0,
-                    font: "inherit",
-                    color: "var(--chalk-dim)",
-                    fontSize: 10,
-                    fontFamily: "var(--font-mono)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <span>
-                    {wallet.kind} wallet · {wallet.publicKey.slice(0, 4)}…
-                    {wallet.publicKey.slice(-4)}
-                  </span>
-                  <span>{copied ? "Copied" : "Tap to copy"}</span>
-                </button>
+              {wallet.publicKey ? (
+                <WalletPanel address={wallet.publicKey} />
+              ) : (
+                <p className="muted" style={{ fontSize: 11 }}>
+                  Sign in to see your wallet.
+                </p>
               )}
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <button
-                  className="btn btn-ghost btn-small"
-                  style={{ width: "100%" }}
-                  onClick={newTester}
-                  disabled={mode !== "idle"}
-                >
-                  New tester
-                </button>
-                <button
-                  className="btn btn-small"
-                  style={{ width: "100%" }}
-                  onClick={play}
-                  disabled={mode !== "idle"}
-                >
-                  {mode === "playing" ? "Playing…" : "Play"}
-                </button>
-                <button
-                  className="btn btn-small"
-                  style={{ width: "100%" }}
-                  onClick={end}
-                  disabled={mode === "ending"}
-                >
-                  {mode === "ending" ? "Ending…" : "End game"}
-                </button>
-              </div>
+              {DEV_TOOLS_ENABLED && (
+                <>
+                  <hr className="slip-rule" style={{ margin: "2px 0" }} />
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      fontSize: 10,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "var(--chalk-dim)",
+                    }}
+                  >
+                    <span>Testing tools</span>
+                    <span>{note ?? (profile ? `as ${profile.displayName}` : "no player")}</span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <button
+                      className="btn btn-ghost btn-small"
+                      style={{ width: "100%" }}
+                      onClick={newTester}
+                      disabled={mode !== "idle"}
+                    >
+                      New tester
+                    </button>
+                    <button
+                      className="btn btn-small"
+                      style={{ width: "100%" }}
+                      onClick={play}
+                      disabled={mode !== "idle"}
+                    >
+                      {mode === "playing" ? "Playing…" : "Play"}
+                    </button>
+                    <button
+                      className="btn btn-small"
+                      style={{ width: "100%" }}
+                      onClick={end}
+                      disabled={mode === "ending"}
+                    >
+                      {mode === "ending" ? "Ending…" : "End game"}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

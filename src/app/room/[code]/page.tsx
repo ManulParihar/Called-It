@@ -15,7 +15,7 @@ import { WaitingScreen } from "@/components/WaitingScreen";
 import { LiveScreen } from "@/components/LiveScreen";
 import { FullTimeScreen } from "@/components/FullTimeScreen";
 import { Referee } from "@/components/Referee";
-import { DevBar } from "@/components/DevBar";
+import { SettingsMenu } from "@/components/SettingsMenu";
 import { DribbleLoader } from "@/components/DribbleLoader";
 import { NotificationHost } from "@/components/NotificationHost";
 import { useMatchNotifications } from "@/hooks/useMatchNotifications";
@@ -163,7 +163,7 @@ export default function RoomPage({ params }: { params: { code: string } }) {
     <>
       <NotificationHost items={items} onDismiss={dismiss} />
       <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{act()}</div>
-      <DevBar code={code} onChanged={refresh} />
+      <SettingsMenu code={code} onChanged={refresh} />
     </>
   );
 }

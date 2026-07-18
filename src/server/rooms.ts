@@ -33,8 +33,8 @@ const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no easily confused l
 // Replay fixtures keep their real historical kickoff time so they sort and
 // display correctly in the picker (see getPlayableFixtures), but that time is
 // always in the past. A room needs its own future lock so players can still
-// join and submit predictions before the DevBar's Play button drives the
-// match forward by hand.
+// join and submit predictions before the settings menu's Play button drives
+// the match forward by hand.
 const REPLAY_LOCK_WINDOW_MS = 15 * 60 * 1000;
 
 function makeCode(length = 6): string {
