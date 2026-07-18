@@ -18,10 +18,15 @@ export function MomentRing({
   show,
   cycle,
   seconds = 3,
+  right = 12,
 }: {
   show: boolean;
   cycle: number;
   seconds?: number;
+  // Distance from the right edge, in px. Callers that also pin something
+  // else to the top-right (like a menu button) can shift the ring out of
+  // its way.
+  right?: number;
 }) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [remaining, setRemaining] = useState(seconds);
@@ -60,7 +65,7 @@ export function MomentRing({
           style={{
             position: "fixed",
             top: "calc(12px + env(safe-area-inset-top))",
-            right: 12,
+            right: `calc(${right}px + env(safe-area-inset-right))`,
             zIndex: 55,
             pointerEvents: "none",
             width: SIZE,

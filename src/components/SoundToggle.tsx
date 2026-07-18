@@ -3,8 +3,6 @@
 import { motion } from "framer-motion";
 import { useSoundCues } from "@/hooks/useSoundCues";
 
-const DEV = process.env.NODE_ENV !== "production";
-
 const TOGGLE_TRANSITION = { duration: 0.16, ease: "easeOut" as const };
 
 export function SoundToggle() {
@@ -22,9 +20,7 @@ export function SoundToggle() {
       whileTap={{ scale: 0.9 }}
       style={{
         position: "fixed",
-        bottom: DEV
-          ? "calc(84px + env(safe-area-inset-bottom))"
-          : "calc(16px + env(safe-area-inset-bottom))",
+        bottom: "calc(16px + env(safe-area-inset-bottom))",
         left: "calc(12px + env(safe-area-inset-left))",
         zIndex: 60,
         pointerEvents: "auto",

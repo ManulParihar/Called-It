@@ -20,8 +20,6 @@ import { DribbleLoader } from "@/components/DribbleLoader";
 import { NotificationHost } from "@/components/NotificationHost";
 import { useMatchNotifications } from "@/hooks/useMatchNotifications";
 
-const DEV_TOOLS = process.env.NODE_ENV !== "production";
-
 export default function RoomPage({ params }: { params: { code: string } }) {
   const code = decodeURIComponent(params.code).toUpperCase();
   const router = useRouter();
@@ -164,16 +162,7 @@ export default function RoomPage({ params }: { params: { code: string } }) {
   return (
     <>
       <NotificationHost items={items} onDismiss={dismiss} />
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          paddingBottom: DEV_TOOLS ? 76 : 0,
-        }}
-      >
-        {act()}
-      </div>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{act()}</div>
       <DevBar code={code} onChanged={refresh} />
     </>
   );
