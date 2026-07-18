@@ -77,22 +77,34 @@ function FixtureCard({
   selected?: boolean;
   onSelect?: (id: string) => void;
 }) {
-  if (fixture.kind === "upcoming") {
-    // Future matches are on the board for flavour only: a plain div, never a
-    // form control, so it cannot be clicked, focused or submitted.
+  if (fixture.kind !== "replay") {
+    // Live and upcoming matches come straight from the feed and are on the board
+    // for flavour only: a plain div, never a form control, so it cannot be
+    // clicked, focused or submitted. Live matches read at full strength with a
+    // LIVE badge; upcoming ones are dimmed and marked "coming soon".
+    const isLive = fixture.kind === "live";
     return (
-      <div className="card" style={{ opacity: 0.55 }} aria-disabled="true">
+      <div className="card" style={{ opacity: isLive ? 1 : 0.55 }} aria-disabled="true">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <p className="eyebrow" style={{ flex: 1 }}>
             {fixture.competition}
           </p>
-          <FixtureBadge label="COMING SOON" color="var(--chalk-dim)" />
+          {isLive ? (
+            <FixtureBadge label="LIVE" color="var(--grass)" />
+          ) : (
+            <FixtureBadge label="COMING SOON" color="var(--chalk-dim)" />
+          )}
         </div>
         <p
           className="display"
-          style={{ fontSize: 18, margin: "6px 0", color: "var(--chalk-dim)" }}
+          style={{
+            fontSize: 18,
+            margin: "6px 0",
+            color: isLive ? "var(--chalk)" : "var(--chalk-dim)",
+          }}
         >
-          {fixture.homeTeam} <span style={{ color: "var(--chalk-dim)" }}>v</span>{" "}
+          {fixture.homeTeam}{" "}
+          <span style={{ color: isLive ? "var(--amber)" : "var(--chalk-dim)" }}>v</span>{" "}
           {fixture.awayTeam}
         </p>
         <p
@@ -104,7 +116,9 @@ function FixtureCard({
             color: "var(--chalk-dim)",
           }}
         >
-          {matchDateLabel(fixture.kickoffAt)}
+          {isLive
+            ? `Kicked off ${kickoffLabel(fixture.kickoffAt)}`
+            : matchDateLabel(fixture.kickoffAt)}
         </p>
       </div>
     );
@@ -211,7 +225,6 @@ export default function CreateRoomPage() {
   const liveFixtures = fixtures?.filter((f) => f.kind === "live") ?? [];
   const replayFixtures = fixtures?.filter((f) => f.kind === "replay") ?? [];
   const upcomingFixtures = fixtures?.filter((f) => f.kind === "upcoming") ?? [];
-  const hasPlayable = liveFixtures.length + replayFixtures.length > 0;
 
   async function submit() {
     if (!profile || !fixtureId || busy) return;
@@ -265,23 +278,6 @@ export default function CreateRoomPage() {
           <p className="eyebrow">Step {step + 1} of 3</p>
           <h1 style={{ fontSize: 22 }}>{steps[step]}</h1>
         </div>
-        {step === 0 && DEV_TOOLS_ENABLED && (
-          <button
-            className="btn btn-ghost btn-small"
-            onClick={refreshReplays}
-            disabled={refreshing}
-            title="Pull the latest finished matches from the feed"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
-            {refreshing ? (
-              <>
-                <DribbleLoader size="inline" /> Refreshing…
-              </>
-            ) : (
-              "↻ Refresh"
-            )}
-          </button>
-        )}
       </header>
 
       {/* step progress bar */}
@@ -315,42 +311,71 @@ export default function CreateRoomPage() {
                   <DribbleLoader size="page" label="Loading fixtures…" />
                 </div>
               )}
-              {fixtures && !hasPlayable && (
-                <p className="muted">No matches to play yet. Seed some and come back.</p>
-              )}
-              {liveFixtures.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <p className="eyebrow">Live</p>
-                  {liveFixtures.map((f) => (
-                    <FixtureCard
-                      key={f.id}
-                      fixture={f}
-                      selected={fixtureId === f.id}
-                      onSelect={selectFixture}
-                    />
-                  ))}
-                </div>
-              )}
-              {replayFixtures.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <p className="eyebrow">Replays</p>
-                  {replayFixtures.map((f) => (
-                    <FixtureCard
-                      key={f.id}
-                      fixture={f}
-                      selected={fixtureId === f.id}
-                      onSelect={selectFixture}
-                    />
-                  ))}
-                </div>
-              )}
-              {upcomingFixtures.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <p className="eyebrow">Coming soon</p>
-                  {upcomingFixtures.map((f) => (
-                    <FixtureCard key={f.id} fixture={f} />
-                  ))}
-                </div>
+              {fixtures && (
+                <>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <p className="eyebrow">Live</p>
+                    {liveFixtures.length > 0 ? (
+                      liveFixtures.map((f) => <FixtureCard key={f.id} fixture={f} />)
+                    ) : (
+                      <p className="muted">No matches live yet.</p>
+                    )}
+                  </div>
+
+                  {upcomingFixtures.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <p className="eyebrow">Upcoming matches</p>
+                      {upcomingFixtures.map((f) => (
+                        <FixtureCard key={f.id} fixture={f} />
+                      ))}
+                    </div>
+                  )}
+
+                  {(replayFixtures.length > 0 || DEV_TOOLS_ENABLED) && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <p className="eyebrow" style={{ flex: 1 }}>
+                          Replays
+                        </p>
+                        {DEV_TOOLS_ENABLED && (
+                          <button
+                            className="btn btn-ghost btn-small"
+                            onClick={refreshReplays}
+                            disabled={refreshing}
+                            title="Pull the latest finished matches from the feed"
+                            aria-label="Refresh replays"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "6px 10px",
+                            }}
+                          >
+                            {refreshing ? (
+                              <DribbleLoader size="inline" />
+                            ) : (
+                              <span style={{ fontSize: 16, lineHeight: 1 }}>↻</span>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      {replayFixtures.length > 0 ? (
+                        replayFixtures.map((f) => (
+                          <FixtureCard
+                            key={f.id}
+                            fixture={f}
+                            selected={fixtureId === f.id}
+                            onSelect={selectFixture}
+                          />
+                        ))
+                      ) : (
+                        <p className="muted">
+                          No replays pulled yet. Hit refresh to load recent matches.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

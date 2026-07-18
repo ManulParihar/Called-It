@@ -1,8 +1,10 @@
-// Inserts a few fixtures so rooms can be created during local testing.
+// Inserts the replay fixtures so rooms can be created during local testing.
+// Live and upcoming matches are pulled live from the TxLINE feed, so they are
+// not seeded here.
 //
-// The fixture with id "fx-sample" matches the recorded match file, so you can
-// create a room on it and then run the worker in replay mode with
-// REPLAY_FIXTURE_ID=fx-sample to watch the room come to life.
+// The "tx-sample-replay" fixture falls back to the bundled recorded match, so
+// you can create a room on it and drive it forward with the settings menu's
+// Play button even with no feed access.
 //
 // Run it with: npm run seed
 
@@ -50,24 +52,10 @@ async function main(): Promise<void> {
   const db = serverDb();
 
   const fixtures = [
-    {
-      id: "fx-sample",
-      competition: "World Cup",
-      home_team: "Brazil",
-      away_team: "Argentina",
-      kickoff_at: hoursFromNow(1),
-      kind: "live",
-    },
-    {
-      id: "fx-demo-2",
-      competition: "World Cup",
-      home_team: "France",
-      away_team: "England",
-      kickoff_at: hoursFromNow(3),
-      kind: "live",
-    },
-    // A replay that always works, even with no feed access: it has no pulled
-    // timeline, so the Play button falls back to the recorded sample match.
+    // Live and upcoming matches come straight from the TxLINE feed now, so the
+    // database only seeds replays. A replay that always works, even with no feed
+    // access: it has no pulled timeline, so the Play button falls back to the
+    // recorded sample match.
     {
       id: "tx-sample-replay",
       competition: "World Cup",

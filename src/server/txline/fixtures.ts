@@ -1,10 +1,10 @@
-// Pulls upcoming fixtures from the TxLINE schedule so the create screen can show
-// real matches as "coming soon".
+// Pulls live and upcoming fixtures from the TxLINE schedule so the create screen
+// can show real matches: the ones playing now under "Live" and the ones still to
+// come under "Upcoming".
 //
 // This is best effort and never throws. If there is no API token, or the feed
-// is unreachable, it returns an empty list and the picker just falls back to the
-// seeded and replay fixtures. That keeps the demo working in a tunnel with no
-// feed access.
+// is unreachable, it returns empty lists and the picker just falls back to the
+// replay fixtures. That keeps the demo working in a tunnel with no feed access.
 
 import type { Fixture } from "../../lib/types";
 import { CredentialStore, baseUrl } from "./auth";
@@ -22,6 +22,10 @@ interface FeedFixture {
 }
 
 const SNAPSHOT_TIMEOUT_MS = 4000;
+
+// How long after kickoff a match is still treated as "live". Comfortably covers
+// 90 minutes plus stoppage, half time and a little extra time.
+const LIVE_WINDOW_MS = 2.5 * 60 * 60 * 1000;
 
 // Turns the feed's start time (epoch seconds, epoch millis, or an ISO string)
 // into an ISO string. Returns null when it cannot be read.
@@ -81,26 +85,47 @@ async function fetchSnapshot(store: CredentialStore): Promise<FeedFixture[]> {
   }
 }
 
-// Upcoming World Cup fixtures, soonest first. Empty on any failure.
-export async function getUpcomingFromTxline(limit = 6): Promise<Fixture[]> {
+export interface TxlineFixtures {
+  live: Fixture[];
+  upcoming: Fixture[];
+}
+
+// Live and upcoming World Cup fixtures from the TxLINE schedule. Live matches
+// are the ones that kicked off within the last few hours (most recent first);
+// upcoming are still to come (soonest first). Both lists are empty on any
+// failure, so a missing token or an outage never breaks the picker.
+export async function getTxlineFixtures(upcomingLimit = 6): Promise<TxlineFixtures> {
   let store: CredentialStore;
   try {
     store = new CredentialStore();
   } catch {
     // No API token configured. Nothing to show, and that is fine.
-    return [];
+    return { live: [], upcoming: [] };
   }
 
   try {
     const rows = await fetchSnapshot(store);
     const now = Date.now();
-    return rows
+    const fixtures = rows
       .filter(isWorldCup)
       .map(toFixture)
-      .filter((f): f is Fixture => f !== null && new Date(f.kickoffAt).getTime() > now)
+      .filter((f): f is Fixture => f !== null);
+
+    const live = fixtures
+      .filter((f) => {
+        const kickoff = new Date(f.kickoffAt).getTime();
+        return kickoff <= now && kickoff > now - LIVE_WINDOW_MS;
+      })
+      .map((f) => ({ ...f, kind: "live" as const }))
+      .sort((a, b) => new Date(b.kickoffAt).getTime() - new Date(a.kickoffAt).getTime());
+
+    const upcoming = fixtures
+      .filter((f) => new Date(f.kickoffAt).getTime() > now)
       .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())
-      .slice(0, limit);
+      .slice(0, upcomingLimit);
+
+    return { live, upcoming };
   } catch {
-    return [];
+    return { live: [], upcoming: [] };
   }
 }
