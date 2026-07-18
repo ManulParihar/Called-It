@@ -30,6 +30,13 @@ import {
 
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no easily confused letters
 
+// Replay fixtures keep their real historical kickoff time so they sort and
+// display correctly in the picker (see getPlayableFixtures), but that time is
+// always in the past. A room needs its own future lock so players can still
+// join and submit predictions before the settings menu's Play button drives
+// the match forward by hand.
+const REPLAY_LOCK_WINDOW_MS = 15 * 60 * 1000;
+
 function makeCode(length = 6): string {
   let code = "";
   for (let i = 0; i < length; i++) {
@@ -106,11 +113,17 @@ export async function createRoom(input: CreateRoomInput): Promise<RoomBundle> {
   const fixture = await fetchFixture(input.fixtureId);
   // A room opened after kickoff could never be played: lock_at below is the
   // kickoff, so it would be born locked. The lobby already hides started
-  // fixtures; this catches a stale picker.
-  if (Date.now() >= new Date(fixture.kickoffAt).getTime()) {
+  // fixtures; this catches a stale picker. Replay fixtures are seeded with
+  // their real historical kickoff time on purpose (see fixtures.ts), so
+  // they're exempt from this check.
+  if (fixture.kind !== "replay" && Date.now() >= new Date(fixture.kickoffAt).getTime()) {
     throw new Error("That match has already kicked off");
   }
   const code = await uniqueCode();
+  const lockAt =
+    fixture.kind === "replay"
+      ? new Date(Date.now() + REPLAY_LOCK_WINDOW_MS).toISOString()
+      : fixture.kickoffAt;
 
   const { data: roomRow, error: roomError } = await db
     .from("rooms")
@@ -124,7 +137,7 @@ export async function createRoom(input: CreateRoomInput): Promise<RoomBundle> {
       payout_mode: input.payoutMode,
       forfeit_text: input.wagerType === "forfeit" ? input.forfeitText ?? null : null,
       status: "open",
-      lock_at: fixture.kickoffAt,
+      lock_at: lockAt,
     })
     .select("*")
     .single();

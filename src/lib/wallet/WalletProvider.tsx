@@ -42,7 +42,10 @@ const AdapterProvider = RawAdapterProvider as ComponentType<{
 }>;
 const PrivyProvider = RawPrivyProvider as ComponentType<{
   appId: string;
-  config: { embeddedWallets: { createOnLogin: "users-without-wallets" } };
+  config: {
+    embeddedWallets: { createOnLogin: "users-without-wallets" };
+    solanaClusters: { name: "devnet"; rpcUrl: string }[];
+  };
   children: ReactNode;
 }>;
 
@@ -98,7 +101,12 @@ export function WalletProviders({ children }: { children: ReactNode }) {
   const inner = PRIVY_APP_ID ? (
     <PrivyProvider
       appId={PRIVY_APP_ID}
-      config={{ embeddedWallets: { createOnLogin: "users-without-wallets" } }}
+      config={{
+        embeddedWallets: { createOnLogin: "users-without-wallets" },
+        // The pool program only lives on devnet right now, so the embedded
+        // wallet should talk to the same cluster by default.
+        solanaClusters: [{ name: "devnet", rpcUrl: endpoint }],
+      }}
     >
       <PrivyInner>{children}</PrivyInner>
     </PrivyProvider>

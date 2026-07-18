@@ -1,0 +1,11 @@
+{"offsetMs":492981687,"kind":"phase_change","phase":"not_started"}
+{"offsetMs":494895858,"kind":"phase_change","phase":"first_half"}
+{"offsetMs":497867003,"kind":"phase_change","phase":"half_time"}
+{"offsetMs":498860111,"kind":"phase_change","phase":"second_half"}
+{"offsetMs":502088822,"kind":"phase_change","phase":"extra_time_first_half"}
+{"offsetMs":502414005,"kind":"phase_change","phase":"extra_time_break"}
+{"offsetMs":502454287,"kind":"phase_change","phase":"extra_time_first_half"}
+{"offsetMs":502456061,"kind":"phase_change","phase":"extra_time_break"}
+{"offsetMs":503540747,"kind":"phase_change","phase":"extra_time_second_half"}
+{"offsetMs":503745385,"kind":"phase_change","phase":"extra_time_end"}
+{"offsetMs":504812187,"kind":"phase_change","phase":"awaiting_penalties"}

@@ -14,7 +14,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-declare_id!("Ca11edIt1111111111111111111111111111111111");
+declare_id!("mV4Xe9uYS1osszQZiWMTFsQWvotqcqL9dGsNXdMNKFf");
 
 #[program]
 pub mod called_it_pool {
@@ -85,7 +85,10 @@ pub mod called_it_pool {
     // Pays the winners. The amounts are worked out by the backend from the
     // match result. The recipient accounts are passed in the same order as the
     // amounts. Only the settlement key can call this.
-    pub fn settle_pool(ctx: Context<SettleOrCancel>, amounts: Vec<u64>) -> Result<()> {
+    pub fn settle_pool<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleOrCancel<'info>>,
+        amounts: Vec<u64>,
+    ) -> Result<()> {
         require!(
             ctx.accounts.signer.key() == ctx.accounts.pool.authority,
             PoolError::NotAllowed
@@ -103,7 +106,10 @@ pub mod called_it_pool {
 
     // Refunds everyone when a match is voided. The creator or the settlement key
     // can call this.
-    pub fn cancel_pool(ctx: Context<SettleOrCancel>, amounts: Vec<u64>) -> Result<()> {
+    pub fn cancel_pool<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleOrCancel<'info>>,
+        amounts: Vec<u64>,
+    ) -> Result<()> {
         require!(
             ctx.accounts.signer.key() == ctx.accounts.pool.creator
                 || ctx.accounts.signer.key() == ctx.accounts.pool.authority,
@@ -123,7 +129,7 @@ pub mod called_it_pool {
 // Moves lamports from the vault to each recipient. The recipients come in as
 // remaining accounts in the same order as the amounts. The total can never be
 // more than what the vault holds.
-fn pay_out(ctx: &Context<SettleOrCancel>, amounts: &[u64]) -> Result<()> {
+fn pay_out<'info>(ctx: &Context<'_, '_, '_, 'info, SettleOrCancel<'info>>, amounts: &[u64]) -> Result<()> {
     let recipients = ctx.remaining_accounts;
     require!(recipients.len() == amounts.len(), PoolError::CountMismatch);
 

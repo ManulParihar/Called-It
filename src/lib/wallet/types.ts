@@ -20,6 +20,11 @@ export interface AppWallet {
   connect: () => Promise<string | null>;
   disconnect: () => Promise<void>;
   // Signs and sends one transaction built from these instructions and returns
-  // the confirmed signature.
-  signAndSend: (instructions: TransactionInstruction[]) => Promise<string>;
+  // the confirmed signature. `description` is a human readable line for
+  // backends that show a confirmation prompt (Privy can't otherwise tell the
+  // player what a call into our own program is actually moving).
+  signAndSend: (
+    instructions: TransactionInstruction[],
+    description?: string,
+  ) => Promise<string>;
 }

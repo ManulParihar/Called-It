@@ -15,12 +15,10 @@ import { WaitingScreen } from "@/components/WaitingScreen";
 import { LiveScreen } from "@/components/LiveScreen";
 import { FullTimeScreen } from "@/components/FullTimeScreen";
 import { Referee } from "@/components/Referee";
-import { DevBar } from "@/components/DevBar";
+import { SettingsMenu } from "@/components/SettingsMenu";
 import { DribbleLoader } from "@/components/DribbleLoader";
 import { NotificationHost } from "@/components/NotificationHost";
 import { useMatchNotifications } from "@/hooks/useMatchNotifications";
-
-const DEV_TOOLS = process.env.NODE_ENV !== "production";
 
 export default function RoomPage({ params }: { params: { code: string } }) {
   const code = decodeURIComponent(params.code).toUpperCase();
@@ -164,17 +162,8 @@ export default function RoomPage({ params }: { params: { code: string } }) {
   return (
     <>
       <NotificationHost items={items} onDismiss={dismiss} />
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          paddingBottom: DEV_TOOLS ? 76 : 0,
-        }}
-      >
-        {act()}
-      </div>
-      <DevBar code={code} onChanged={refresh} />
+      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{act()}</div>
+      <SettingsMenu code={code} onChanged={refresh} />
     </>
   );
 }

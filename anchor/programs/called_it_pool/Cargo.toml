@@ -3,6 +3,7 @@ name = "called_it_pool"
 version = "0.1.0"
 description = "Escrow for a Called It money room"
 edition = "2021"
+rust-version = "1.75.0"
 
 [lib]
 crate-type = ["cdylib", "lib"]

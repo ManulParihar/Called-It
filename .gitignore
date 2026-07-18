@@ -23,6 +23,9 @@ next-env.d.ts
 /anchor/target
 /anchor/.anchor
 test-ledger
+*-wallet.json
+sol-devnet-wallet.json
+/.secrets
 
 # misc
 .DS_Store
@@ -38,3 +41,6 @@ yarn-error.log*
 
 # typescript build cache
 *.tsbuildinfo
+
+# internal doc for demo recording, not for the public repo
+/docs/app-guide.md

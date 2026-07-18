@@ -1,7 +1,7 @@
 // Play the full flow on a phone. Starts the local-DB dev server (so the DevBar
 // Play / End game controls work, which only happens when NODE_ENV is not
-// production) and opens a public tunnel to it, then prints the URL to open on
-// the phone.
+// production) and opens a public tunnel to it, then prints the URL — and a
+// scannable QR code for it — to open on the phone.
 //
 //   npm run mobile
 //
@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
 import { once } from "node:events";
+import qrcode from "qrcode-terminal";
 
 // Resolved to the first free port at startup so a leftover server doesn't crash
 // the launch with EADDRINUSE.
@@ -129,7 +130,8 @@ function banner(url) {
   console.log(`\n┌${line}┐`);
   console.log(`│   ${url}   │`);
   console.log(`└${line}┘`);
-  console.log("\nOpen that URL on your phone. Ctrl-C here stops everything.\n");
+  qrcode.generate(url, { small: true }, (qr) => console.log(`\n${qr}`));
+  console.log("Scan that with your phone's camera, or open the URL above. Ctrl-C here stops everything.\n");
 }
 
 async function main() {
