@@ -16,6 +16,7 @@
     "worker:local": "LOCAL_DB=1 tsx src/server/worker/run.ts",
     "seed": "tsx scripts/seed.ts",
     "seed:local": "LOCAL_DB=1 tsx scripts/seed.ts",
+    "pull:replays": "tsx scripts/pull-replays.ts",
     "escrow:devnet": "tsx scripts/escrow-devnet.ts"
   },
   "dependencies": {
