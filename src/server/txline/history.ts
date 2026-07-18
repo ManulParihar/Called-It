@@ -16,6 +16,7 @@ import type { MatchEventKind, MatchPhase, TeamSide } from "../../lib/match";
 import { MATCH_PHASE_BY_ID } from "../../lib/match";
 import type { ReplayLine } from "./replay";
 import { CredentialStore, baseUrl } from "./auth";
+import { readSseMessages } from "./sse";
 
 type Raw = Record<string, unknown>;
 
@@ -199,18 +200,33 @@ export async function fetchHistorical(
   const url = `${baseUrl()}/api/scores/historical/${fixtureId}`;
   let creds = await store.current();
   let res = await fetch(url, {
-    headers: { ...store.authHeaders(creds), Accept: "application/json" },
+    headers: { ...store.authHeaders(creds), Accept: "text/event-stream" },
   });
   if (res.status === 401) {
     creds = await store.refresh();
     res = await fetch(url, {
-      headers: { ...store.authHeaders(creds), Accept: "application/json" },
+      headers: { ...store.authHeaders(creds), Accept: "text/event-stream" },
     });
   }
   if (!res.ok) throw new Error(`Historical request for ${fixtureId} failed with status ${res.status}`);
-  const body = (await res.json()) as unknown;
-  if (Array.isArray(body)) return body;
-  const obj = asRecord(body);
-  const list = obj ? pick(obj, ["scores", "Scores", "data"]) : undefined;
-  return Array.isArray(list) ? list : [];
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/event-stream")) {
+    const body = (await res.json()) as unknown;
+    if (Array.isArray(body)) return body;
+    const obj = asRecord(body);
+    const list = obj ? pick(obj, ["scores", "Scores", "data"]) : undefined;
+    return Array.isArray(list) ? list : [];
+  }
+
+  const scores: unknown[] = [];
+  for await (const message of readSseMessages(res)) {
+    if (!message.data) continue;
+    try {
+      scores.push(JSON.parse(message.data));
+    } catch {
+      continue;
+    }
+  }
+  return scores;
 }
