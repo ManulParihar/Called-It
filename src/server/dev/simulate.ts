@@ -10,7 +10,7 @@
 import { existsSync } from "node:fs";
 import { serverDb } from "../db/supabase";
 import { getRoomBundle } from "../rooms";
-import { loadReplayLines } from "../txline/replay";
+import { loadReplayLines, type ReplayLine } from "../txline/replay";
 import { loadState, processEvent } from "../worker/pipeline";
 import type { MatchEvent } from "../../lib/match";
 import type { Fixture } from "../../lib/types";
@@ -40,6 +40,28 @@ function logPathFor(fixture: Fixture): string {
   return SAMPLE_LOG;
 }
 
+// Loads the recorded timeline for a fixture. A replay pulled by the in app
+// refresh button stores its timeline on the row (replay_log), which is the only
+// option on a serverless host with a read only filesystem. Falls back to the
+// bundled log file, then the sample match, so the Play button always runs.
+async function loadTimeline(
+  db: ReturnType<typeof serverDb>,
+  fixture: Fixture,
+): Promise<ReplayLine[]> {
+  if (fixture.kind === "replay") {
+    const { data } = await db
+      .from("fixtures")
+      .select("replay_log")
+      .eq("id", fixture.id)
+      .maybeSingle();
+    const log = (data as { replay_log?: unknown[] | null } | null)?.replay_log;
+    if (Array.isArray(log) && log.length > 0) {
+      return (log as ReplayLine[]).slice().sort((a, b) => a.offsetMs - b.offsetMs);
+    }
+  }
+  return loadReplayLines(logPathFor(fixture));
+}
+
 export interface SimulateResult {
   processed: number;
   remaining: number;
@@ -62,7 +84,7 @@ export async function simulateRoom(
   if (!bundle) throw new Error("Room not found");
   const fixtureId = bundle.room.fixture.id;
 
-  const lines = await loadReplayLines(logPathFor(bundle.room.fixture));
+  const lines = await loadTimeline(db, bundle.room.fixture);
 
   const { data: existing } = await db
     .from("match_events")

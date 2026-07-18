@@ -21,6 +21,13 @@ export function listFixtures(): Promise<{ fixtures: Fixture[] }> {
   return request("/api/fixtures");
 }
 
+// Testing only. Pulls the last few finished matches from TxLINE and stores them
+// as replay fixtures, so the picker has real games to replay. Returns how many
+// were pulled.
+export function pullReplays(): Promise<{ pulled: number }> {
+  return request("/api/fixtures/pull-replays", { method: "POST" });
+}
+
 export interface CreateRoomBody {
   userId: string;
   displayName: string;

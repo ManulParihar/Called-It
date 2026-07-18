@@ -28,6 +28,9 @@ export interface FixtureRow {
   // and default when read.
   kind?: FixtureKind | null;
   tx_fixture_id?: string | null;
+  // A replay pulled at runtime stores its recorded timeline here (an array of
+  // ReplayLine). Absent for live and upcoming fixtures.
+  replay_log?: unknown[] | null;
 }
 
 export interface RoomRow {

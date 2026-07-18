@@ -3,10 +3,10 @@
 // Create a room in three steps: pick the fixture, pick your team, set the
 // stakes. Then the room opens and the code is ready to share.
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { createRoom, listFixtures, setRoomPool } from "@/lib/api";
+import { createRoom, listFixtures, pullReplays, setRoomPool } from "@/lib/api";
 import type { Fixture, PayoutMode, WagerType } from "@/lib/types";
 import type { TeamSide } from "@/lib/match";
 import { DEFAULT_FORFEITS } from "@/lib/forfeits";
@@ -21,6 +21,13 @@ const PAYOUT_LABELS: Record<PayoutMode, string> = {
   top_three: "Top 3 split",
   all_but_loser: "All but loser",
 };
+
+// The replay refresh button pulls real past matches from the feed, which is a
+// testing convenience, so it rides the same switch as the other testing tools:
+// on outside production, and opt in on a hosted judge build.
+const DEV_TOOLS_ENABLED =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === "1";
 
 function kickoffLabel(iso: string): string {
   const date = new Date(iso);
@@ -150,17 +157,37 @@ export default function CreateRoomPage() {
   const [customForfeit, setCustomForfeit] = useState("");
   const [usingCustom, setUsingCustom] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (ready && !profile) router.replace("/");
   }, [ready, profile, router]);
 
-  useEffect(() => {
-    listFixtures()
-      .then((res) => setFixtures(res.fixtures))
-      .catch((err: Error) => setError(err.message));
+  const loadFixtures = useCallback(async () => {
+    const res = await listFixtures();
+    setFixtures(res.fixtures);
   }, []);
+
+  useEffect(() => {
+    loadFixtures().catch((err: Error) => setError(err.message));
+  }, [loadFixtures]);
+
+  // Pulls the latest finished matches into the picker, then reloads the list so
+  // the new replays show up without leaving the screen.
+  async function refreshReplays() {
+    if (refreshing) return;
+    setRefreshing(true);
+    setError(null);
+    try {
+      await pullReplays();
+      await loadFixtures();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const fixture = useMemo(
     () => fixtures?.find((f) => f.id === fixtureId) ?? null,
@@ -238,6 +265,23 @@ export default function CreateRoomPage() {
           <p className="eyebrow">Step {step + 1} of 3</p>
           <h1 style={{ fontSize: 22 }}>{steps[step]}</h1>
         </div>
+        {step === 0 && DEV_TOOLS_ENABLED && (
+          <button
+            className="btn btn-ghost btn-small"
+            onClick={refreshReplays}
+            disabled={refreshing}
+            title="Pull the latest finished matches from the feed"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            {refreshing ? (
+              <>
+                <DribbleLoader size="inline" /> Refreshing…
+              </>
+            ) : (
+              "↻ Refresh"
+            )}
+          </button>
+        )}
       </header>
 
       {/* step progress bar */}
