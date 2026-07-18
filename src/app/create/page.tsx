@@ -167,6 +167,14 @@ export default function CreateRoomPage() {
     [fixtures, fixtureId],
   );
 
+  // Picking a fixture is the whole point of step 0, so jump straight to the
+  // next step instead of making the user find a Next button below a long,
+  // scrollable list of matches.
+  function selectFixture(id: string) {
+    setFixtureId(id);
+    setStep(1);
+  }
+
   if (!ready || !profile) return null;
 
   const forfeitText = usingCustom ? customForfeit.trim() : forfeitPick;
@@ -274,7 +282,7 @@ export default function CreateRoomPage() {
                       key={f.id}
                       fixture={f}
                       selected={fixtureId === f.id}
-                      onSelect={setFixtureId}
+                      onSelect={selectFixture}
                     />
                   ))}
                 </div>
@@ -287,7 +295,7 @@ export default function CreateRoomPage() {
                       key={f.id}
                       fixture={f}
                       selected={fixtureId === f.id}
-                      onSelect={setFixtureId}
+                      onSelect={selectFixture}
                     />
                   ))}
                 </div>
@@ -432,27 +440,25 @@ export default function CreateRoomPage() {
         </motion.div>
       </AnimatePresence>
 
-      <div style={{ marginTop: "auto", paddingTop: 8 }}>
-        {step < 2 ? (
-          <button
-            className="btn"
-            disabled={step === 0 ? !fixtureId : false}
-            onClick={() => setStep(step + 1)}
-          >
-            Next
-          </button>
-        ) : (
-          <button className="btn" disabled={!stakesOk || busy} onClick={submit}>
-            {busy ? (
-              <>
-                <DribbleLoader size="inline" /> Opening the room…
-              </>
-            ) : (
-              "Open the room"
-            )}
-          </button>
-        )}
-      </div>
+      {step > 0 && (
+        <div style={{ marginTop: "auto", paddingTop: 8 }}>
+          {step === 1 ? (
+            <button className="btn" onClick={() => setStep(step + 1)}>
+              Next
+            </button>
+          ) : (
+            <button className="btn" disabled={!stakesOk || busy} onClick={submit}>
+              {busy ? (
+                <>
+                  <DribbleLoader size="inline" /> Opening the room…
+                </>
+              ) : (
+                "Open the room"
+              )}
+            </button>
+          )}
+        </div>
+      )}
     </main>
   );
 }
