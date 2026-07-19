@@ -132,26 +132,51 @@ function notificationFor(
 
 function eventLabel(event: LiveEvent, teamName: string | null): string {
   const min = event.minute != null ? `${event.minute}'` : "";
+  // The feed names a team for most things but not all, and a line reading
+  // "Substitution, null" helps nobody. Where the team is missing, say less.
+  const dash = teamName ? ` — ${teamName}` : "";
+  const comma = teamName ? `, ${teamName}` : "";
   switch (event.kind) {
     case "goal":
-      return `${min} GOAL — ${teamName}`;
+      return `${min} GOAL${dash}`;
     case "yellow_card":
-      return `${min} Yellow card, ${teamName}`;
+      return `${min} Yellow card${comma}`;
     case "red_card":
-      return `${min} RED CARD — ${teamName}`;
+      return `${min} RED CARD${dash}`;
     case "corner":
-      return `${min} Corner, ${teamName}`;
+      return `${min} Corner${comma}`;
     case "penalty_awarded":
-      return `${min} PENALTY — ${teamName}`;
+      return `${min} PENALTY${dash}`;
     case "var_review":
       return `${min} VAR review`;
     case "substitution":
-      return `${min} Substitution, ${teamName}`;
+      return `${min} Substitution${comma}`;
     case "phase_change":
       return PHASE_LABELS[event.phase ?? ""] ?? "Phase change";
     default:
       return event.kind;
   }
+}
+
+// Folds a run of the same thing in the same minute into one line. Teams empty
+// their benches at the break, so six substitutions land on 46' together and,
+// listed one after another, they push everything worth reading off the wire.
+// Counted instead, they take a single line: "46' Substitution ×6".
+function collapseRuns(events: LiveEvent[]): { event: LiveEvent; count: number }[] {
+  const rows: { event: LiveEvent; count: number }[] = [];
+  for (const event of events) {
+    const last = rows[rows.length - 1];
+    const same =
+      last &&
+      // Phases are one-offs; two of them in a minute are two different moments.
+      event.kind !== "phase_change" &&
+      last.event.kind === event.kind &&
+      last.event.minute === event.minute &&
+      last.event.team === event.team;
+    if (same) last.count += 1;
+    else rows.push({ event, count: 1 });
+  }
+  return rows;
 }
 
 export function LiveScreen({
@@ -242,7 +267,8 @@ export function LiveScreen({
     bundle.answers.filter((a) => a.memberId === me.id).map((a) => [a.questionId, a.choice]),
   );
   const questions = [...bundle.questions].sort((a, b) => a.slot - b.slot);
-  const ticker = [...events].reverse().slice(0, 12);
+  // Collapse first, so twelve rows are twelve moments rather than one busy minute.
+  const ticker = collapseRuns([...events].reverse()).slice(0, 12);
   const pot = potCents(bundle);
 
   return (
@@ -415,7 +441,7 @@ export function LiveScreen({
                 Nothing yet. The whistle is coming.
               </p>
             )}
-            {ticker.map((event) => (
+            {ticker.map(({ event, count }) => (
               <motion.p
                 key={event.id}
                 initial={{ opacity: 0, x: -14 }}
@@ -436,6 +462,7 @@ export function LiveScreen({
                 }}
               >
                 {eventLabel(event, teamName(event.team))}
+                {count > 1 ? ` ×${count}` : ""}
               </motion.p>
             ))}
           </AnimatePresence>
