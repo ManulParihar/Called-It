@@ -3,7 +3,7 @@
 // One page for the whole life of a room. It watches the room status and shows
 // the right act: make your calls, wait for kickoff, live match, full time.
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,42 +17,16 @@ import { FullTimeScreen } from "@/components/FullTimeScreen";
 import { Referee } from "@/components/Referee";
 import { SettingsMenu } from "@/components/SettingsMenu";
 import { DribbleLoader } from "@/components/DribbleLoader";
-import { NotificationHost } from "@/components/NotificationHost";
-import { useMatchNotifications } from "@/hooks/useMatchNotifications";
 
 export default function RoomPage({ params }: { params: { code: string } }) {
   const code = decodeURIComponent(params.code).toUpperCase();
   const router = useRouter();
   const { profile, ready } = useProfile();
   const { bundle, matchState, events, error, refresh } = useRoomBundle(code);
-  const { items, notify, dismiss } = useMatchNotifications();
 
   useEffect(() => {
     if (ready && !profile) router.replace("/");
   }, [ready, profile, router]);
-
-  // Full time raises its own banner here, not in LiveScreen: the room settles
-  // and swaps to the full-time screen in the same update, so LiveScreen never
-  // gets to react to the ending event. Fire only on the transition into
-  // settled, never when a reload lands on an already-settled room.
-  const prevStatus = useRef<string | null>(null);
-  useEffect(() => {
-    const status = bundle?.room.status;
-    if (!status) return;
-    if (prevStatus.current && prevStatus.current !== "settled" && status === "settled") {
-      const gh = matchState?.goals.home ?? 0;
-      const ga = matchState?.goals.away ?? 0;
-      const fixture = bundle.room.fixture;
-      notify({
-        id: "ft",
-        emoji: "⏱",
-        tone: "info",
-        title: "FULL TIME",
-        body: `${fixture.homeTeam} ${gh}–${ga} ${fixture.awayTeam} · bring me your slips`,
-      });
-    }
-    prevStatus.current = status;
-  }, [bundle, matchState, notify]);
 
   const me =
     bundle && profile
@@ -146,7 +120,6 @@ export default function RoomPage({ params }: { params: { code: string } }) {
           matchState={matchState}
           events={events}
           me={me}
-          onNotify={notify}
         />
       );
     }
@@ -161,7 +134,6 @@ export default function RoomPage({ params }: { params: { code: string } }) {
 
   return (
     <>
-      <NotificationHost items={items} onDismiss={dismiss} />
       <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{act()}</div>
       <SettingsMenu code={code} onChanged={refresh} />
     </>

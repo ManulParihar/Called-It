@@ -10,7 +10,6 @@ import type { Member, RoomBundle } from "@/lib/types";
 import type { MatchState, TeamSide } from "@/lib/match";
 import { liveLeaderboard, potCents, projectedPayouts } from "@/lib/live";
 import type { LiveEvent } from "@/hooks/useRoomBundle";
-import type { MatchNotification } from "@/hooks/useMatchNotifications";
 import { useSoundCues, type SoundCue } from "@/hooks/useSoundCues";
 import { EventFlash, type FlashSpec } from "./EventFlash";
 import { Leaderboard } from "./Leaderboard";
@@ -104,32 +103,6 @@ function flashFor(event: LiveEvent, teamName: string | null): FlashSpec | null {
   return { key: event.id, kind: event.kind, teamName };
 }
 
-// The loud moments also raise an in-app notification banner (see
-// NotificationHost). Same hierarchy as the flashes minus the yellow: goals and
-// the two that can swing a slip. Full time is raised by the room page instead,
-// because this screen unmounts the instant the room settles.
-function notificationFor(
-  event: LiveEvent,
-  teamName: string | null,
-  fixture: { homeTeam: string; awayTeam: string },
-  matchState: MatchState | null,
-): MatchNotification | null {
-  const gh = matchState?.goals.home ?? 0;
-  const ga = matchState?.goals.away ?? 0;
-  const score = `${fixture.homeTeam} ${gh}–${ga} ${fixture.awayTeam}`;
-  const id = String(event.id);
-  switch (event.kind) {
-    case "goal":
-      return { id, emoji: "⚽", tone: "goal", title: `GOAL — ${teamName}`, body: `${score} · your slip just moved` };
-    case "red_card":
-      return { id, emoji: "🟥", tone: "alert", title: `RED CARD — ${teamName}`, body: "Down to ten. Slips are shaking." };
-    case "penalty_awarded":
-      return { id, emoji: "🎯", tone: "alert", title: `PENALTY — ${teamName}`, body: "Someone's slip hangs on this." };
-    default:
-      return null;
-  }
-}
-
 function eventLabel(event: LiveEvent, teamName: string | null): string {
   const min = event.minute != null ? `${event.minute}'` : "";
   // The feed names a team for most things but not all, and a line reading
@@ -184,22 +157,14 @@ export function LiveScreen({
   matchState,
   events,
   me,
-  onNotify,
 }: {
   bundle: RoomBundle;
   matchState: MatchState | null;
   events: LiveEvent[];
   me: Member;
-  onNotify?: (n: MatchNotification) => void;
 }) {
   const room = bundle.room;
   const { cue } = useSoundCues();
-
-  // Read the latest score inside the events effect without making it a
-  // dependency (the effect is driven by events alone; the bundle updates them
-  // together, so the ref holds the post-goal score by the time it runs).
-  const matchStateRef = useRef(matchState);
-  matchStateRef.current = matchState;
 
   const teamName = (side: TeamSide | null): string | null =>
     side === "home" ? room.fixture.homeTeam : side === "away" ? room.fixture.awayTeam : null;
@@ -242,10 +207,6 @@ export function LiveScreen({
       // handled on the full-time screen, which this one gives way to.)
       if (event.kind === "phase_change" && (event.phase === "first_half" || event.phase === "second_half")) {
         cue("whistle");
-      }
-      if (onNotify) {
-        const banner = notificationFor(event, name, room.fixture, matchStateRef.current);
-        if (banner) onNotify(banner);
       }
       const flash = flashFor(event, name);
       if (flash) newFlashes.push(flash);
