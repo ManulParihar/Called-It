@@ -62,6 +62,34 @@ async function loadTimeline(
   return loadReplayLines(logPathFor(fixture));
 }
 
+// How far this room has already replayed, which is how many events it has
+// recorded itself.
+//
+// Recorded events and the running match state are stored per fixture, not per
+// room, so anything a previous room left behind is still sitting there when a
+// new room replays the same match. Left alone that history counts as progress:
+// the replay resumes partway in, skipping the early goals, and picks up a state
+// that already says full time, so the room settles at nil nil the moment it
+// starts. A room with nothing of its own on the fixture is starting from the
+// top, so clear the old run first.
+async function progressFor(
+  db: ReturnType<typeof serverDb>,
+  fixtureId: string,
+  roomCreatedAt: string,
+): Promise<number> {
+  const { data: own } = await db
+    .from("match_events")
+    .select("id")
+    .eq("fixture_id", fixtureId)
+    .gte("received_at", roomCreatedAt);
+  const count = (own as unknown[] | null)?.length ?? 0;
+  if (count > 0) return count;
+
+  await db.from("match_events").delete().eq("fixture_id", fixtureId);
+  await db.from("match_state").delete().eq("fixture_id", fixtureId);
+  return 0;
+}
+
 export interface SimulateResult {
   processed: number;
   remaining: number;
@@ -85,12 +113,7 @@ export async function simulateRoom(
   const fixtureId = bundle.room.fixture.id;
 
   const lines = await loadTimeline(db, bundle.room.fixture);
-
-  const { data: existing } = await db
-    .from("match_events")
-    .select("id")
-    .eq("fixture_id", fixtureId);
-  const cursor = (existing as unknown[] | null)?.length ?? 0;
+  const cursor = await progressFor(db, fixtureId, bundle.room.createdAt);
 
   const steps = options.toEnd ? lines.length : Math.max(1, options.steps ?? 3);
   const slice = lines.slice(cursor, cursor + steps);
