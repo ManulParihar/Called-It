@@ -49,69 +49,68 @@ function toMs(value: unknown): number | undefined {
   return undefined;
 }
 
-function teamFrom(value: unknown): TeamSide | undefined {
-  if (value === 1 || value === "1" || value === "home" || value === "Home") return "home";
-  if (value === 2 || value === "2" || value === "away" || value === "Away") return "away";
-  return undefined;
+// The running tallies the feed keeps for one team. Every snapshot carries the
+// full set, so a real event shows up as one of these counters going up.
+interface Tally {
+  goals: number;
+  yellowCards: number;
+  redCards: number;
+  corners: number;
 }
 
-// A running score, read from whatever shape the feed uses.
-interface Score {
-  home: number;
-  away: number;
+const EMPTY_TALLY: Tally = { goals: 0, yellowCards: 0, redCards: 0, corners: 0 };
+
+// Reads one team's running totals. The feed nests them as
+// Score.Participant1.Total.{Goals,YellowCards,RedCards,Corners}, and leaves a
+// counter out entirely while it is still zero.
+function readTally(raw: Raw, participant: 1 | 2): Tally | null {
+  const score = asRecord(pick(raw, ["Score", "score"]));
+  if (!score) return null;
+  const side = asRecord(pick(score, [`Participant${participant}`, `participant${participant}`]));
+  if (!side) return null;
+  const total = asRecord(pick(side, ["Total", "total"]));
+  if (!total) return EMPTY_TALLY;
+  return {
+    goals: toNumber(pick(total, ["Goals", "goals"])) ?? 0,
+    yellowCards: toNumber(pick(total, ["YellowCards", "yellowCards"])) ?? 0,
+    redCards: toNumber(pick(total, ["RedCards", "redCards"])) ?? 0,
+    corners: toNumber(pick(total, ["Corners", "corners"])) ?? 0,
+  };
 }
 
-function readScore(raw: Raw): Score | null {
-  const value = pick(raw, ["scoreSoccer", "score", "Score", "ScoreSoccer"]);
-  if (value === undefined) return null;
-
-  const obj = asRecord(value);
-  if (obj) {
-    const home = toNumber(pick(obj, ["home", "Home", "participant1", "Participant1", "p1"]));
-    const away = toNumber(pick(obj, ["away", "Away", "participant2", "Participant2", "p2"]));
-    if (home !== undefined && away !== undefined) return { home, away };
-  }
-  if (Array.isArray(value) && value.length >= 2) {
-    const home = toNumber(value[0]);
-    const away = toNumber(value[1]);
-    if (home !== undefined && away !== undefined) return { home, away };
-  }
-  if (typeof value === "string") {
-    const parts = value.split(/[-:]/).map((p) => toNumber(p.trim()));
-    if (parts.length >= 2 && parts[0] !== undefined && parts[1] !== undefined) {
-      return { home: parts[0], away: parts[1] };
-    }
-  }
-  return null;
+// Which participant is the home team. The feed says so on every snapshot and
+// defaults to participant one.
+function homeParticipant(raw: Raw): 1 | 2 {
+  return pick(raw, ["Participant1IsHome", "participant1IsHome"]) === false ? 2 : 1;
 }
 
 function readPhase(raw: Raw): MatchPhase | undefined {
   const id = toNumber(
-    pick(raw, ["statusSoccerId", "StatusSoccerId", "statusId", "StatusId", "gameState", "GameState", "status"]),
+    pick(raw, ["StatusId", "statusId", "statusSoccerId", "StatusSoccerId"]),
   );
   if (id === undefined) return undefined;
   return MATCH_PHASE_BY_ID[id];
 }
 
+// The match minute, taken from the running clock the feed sends in seconds. The
+// clock keeps counting across half time, so the second half reads 46 and up.
 function readMinute(raw: Raw): number | undefined {
-  return toNumber(pick(raw, ["minute", "Minute", "clock", "Clock", "matchMinute", "MatchMinute"]));
+  const clock = asRecord(pick(raw, ["Clock", "clock"]));
+  const seconds = clock ? toNumber(pick(clock, ["Seconds", "seconds"])) : undefined;
+  if (seconds === undefined) return undefined;
+  return Math.floor(seconds / 60) + 1;
 }
 
-const KIND_BY_TYPE: Record<string, MatchEventKind> = {
-  goal: "goal",
-  yellowcard: "yellow_card",
-  yellow: "yellow_card",
-  booking: "yellow_card",
-  secondyellowcard: "red_card",
-  redcard: "red_card",
-  red: "red_card",
-  sendoff: "red_card",
-  corner: "corner",
-  cornerkick: "corner",
+// Actions the feed names but does not keep a counter for. Goals, cards and
+// corners are read off the running totals instead, since those survive an
+// action being discarded or amended later.
+const KIND_BY_ACTION: Record<string, MatchEventKind> = {
   penalty: "penalty_awarded",
   penaltyawarded: "penalty_awarded",
+  penaltyshot: "penalty_awarded",
   var: "var_review",
   varreview: "var_review",
+  varcheck: "var_review",
   substitution: "substitution",
   sub: "substitution",
 };
@@ -120,33 +119,35 @@ function normalizeType(value: unknown): string | undefined {
   return typeof value === "string" ? value.toLowerCase().replace(/[^a-z]/g, "") : undefined;
 }
 
-interface Incident {
-  kind: MatchEventKind;
-  team?: TeamSide;
+// The snapshot's Action is a plain string, such as "goal" or "substitution".
+function readAction(raw: Raw): string | undefined {
+  return normalizeType(pick(raw, ["Action", "action"]));
 }
 
-// Reads an incident off a snapshot's action, if it carries one we care about.
-function readIncident(raw: Raw): Incident | null {
-  const action = asRecord(pick(raw, ["action", "Action", "incident", "Incident"]));
-  if (!action) return null;
+// Which team a snapshot's action belongs to, given which participant is home.
+function actionTeam(raw: Raw, home: 1 | 2): TeamSide | undefined {
+  const participant = toNumber(pick(raw, ["Participant", "participant"]));
+  if (participant !== 1 && participant !== 2) return undefined;
+  return participant === home ? "home" : "away";
+}
 
-  const typeText = normalizeType(pick(action, ["type", "Type", "kind", "Kind", "name", "Name"]));
-  let kind = typeText ? KIND_BY_TYPE[typeText] : undefined;
+// The counters we turn into events, paired with the kind each one stands for.
+const TALLY_KINDS: [keyof Tally, MatchEventKind][] = [
+  ["goals", "goal"],
+  ["yellowCards", "yellow_card"],
+  ["redCards", "red_card"],
+  ["corners", "corner"],
+];
 
-  // A VAR action names what it reviewed under Data.Type; a red card there still
-  // counts as a red card for us.
-  if (kind === "var_review") {
-    const data = asRecord(pick(action, ["data", "Data"]));
-    const reviewed = data ? normalizeType(pick(data, ["type", "Type"])) : undefined;
-    if (reviewed && KIND_BY_TYPE[reviewed] && KIND_BY_TYPE[reviewed] !== "var_review") {
-      kind = "var_review";
+// Removes the most recent line of a kind for a team, for when the feed takes an
+// event back.
+function retract(lines: ReplayLine[], kind: MatchEventKind, team: TeamSide): void {
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (lines[i].kind === kind && lines[i].team === team) {
+      lines.splice(i, 1);
+      return;
     }
   }
-  if (!kind) return null;
-
-  const team = teamFrom(pick(action, ["participant", "Participant", "team", "Team", "side", "Side"]))
-    ?? teamFrom(pick(raw, ["participant", "Participant"]));
-  return { kind, team };
 }
 
 // Folds an ordered run of snapshots into one line per real event.
@@ -154,19 +155,25 @@ export function scoresToReplayLines(scores: unknown[]): ReplayLine[] {
   const rows = scores
     .map(asRecord)
     .filter((r): r is Raw => r !== null)
-    .sort((a, b) => (toNumber(pick(a, ["seq", "Seq"])) ?? 0) - (toNumber(pick(b, ["seq", "Seq"])) ?? 0));
+    .sort((a, b) => (toNumber(pick(a, ["Seq", "seq"])) ?? 0) - (toNumber(pick(b, ["Seq", "seq"])) ?? 0));
+
+  // Time the replay from kickoff. The recorded sequence starts days earlier with
+  // coverage and lineup messages, so the first snapshot is no use as a base.
+  const kickoff = rows.find((r) => readPhase(r) === "first_half");
+  const baseMs =
+    toMs(pick(kickoff ?? rows[0] ?? {}, ["Ts", "ts", "timestamp", "Timestamp"])) ?? undefined;
 
   const lines: ReplayLine[] = [];
-  let baseMs: number | undefined;
   let lastPhase: MatchPhase | undefined;
-  let lastScore: Score = { home: 0, away: 0 };
-  const seenIncident = new Set<number>();
+  const previous: Record<1 | 2, Tally> = { 1: EMPTY_TALLY, 2: EMPTY_TALLY };
+  const seenAction = new Set<number>();
 
   for (const row of rows) {
-    const ms = toMs(pick(row, ["ts", "Ts", "timestamp", "Timestamp"]));
-    if (baseMs === undefined && ms !== undefined) baseMs = ms;
-    const offsetMs = ms !== undefined && baseMs !== undefined ? Math.max(0, ms - baseMs) : lines.length * 1000;
+    const ms = toMs(pick(row, ["Ts", "ts", "timestamp", "Timestamp"]));
+    const offsetMs =
+      ms !== undefined && baseMs !== undefined ? Math.max(0, ms - baseMs) : lines.length * 1000;
     const minute = readMinute(row);
+    const home = homeParticipant(row);
 
     const phase = readPhase(row);
     if (phase && phase !== lastPhase) {
@@ -174,18 +181,31 @@ export function scoresToReplayLines(scores: unknown[]): ReplayLine[] {
       lastPhase = phase;
     }
 
-    const score = readScore(row);
-    if (score) {
-      if (score.home > lastScore.home) lines.push({ offsetMs, kind: "goal", team: "home", minute });
-      if (score.away > lastScore.away) lines.push({ offsetMs, kind: "goal", team: "away", minute });
-      lastScore = score;
+    // One line per step a counter takes, so a snapshot that jumps two goals ahead
+    // still reads out as two goals. A counter that falls means the feed took an
+    // event back, which is how a disallowed goal arrives, so drop the lines it
+    // already produced instead of scoring it twice when it is given again.
+    for (const participant of [1, 2] as const) {
+      const tally = readTally(row, participant);
+      if (!tally) continue;
+      const team: TeamSide = participant === home ? "home" : "away";
+      for (const [field, kind] of TALLY_KINDS) {
+        for (let n = previous[participant][field]; n < tally[field]; n += 1) {
+          lines.push({ offsetMs, kind, team, minute });
+        }
+        for (let n = previous[participant][field]; n > tally[field]; n -= 1) {
+          retract(lines, kind, team);
+        }
+      }
+      previous[participant] = tally;
     }
 
-    const incident = readIncident(row);
-    const seq = toNumber(pick(row, ["seq", "Seq"]));
-    if (incident && seq !== undefined && !seenIncident.has(seq)) {
-      seenIncident.add(seq);
-      lines.push({ offsetMs, kind: incident.kind, team: incident.team, minute });
+    const action = readAction(row);
+    const kind = action ? KIND_BY_ACTION[action] : undefined;
+    const seq = toNumber(pick(row, ["Seq", "seq"]));
+    if (kind && seq !== undefined && !seenAction.has(seq)) {
+      seenAction.add(seq);
+      lines.push({ offsetMs, kind, team: actionTeam(row, home), minute });
     }
   }
 

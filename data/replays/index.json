@@ -1,5 +1,13 @@
 [
   {
+    "id": "tx-18257865",
+    "txFixtureId": "18257865",
+    "competition": "World Cup",
+    "homeTeam": "France",
+    "awayTeam": "England",
+    "kickoffAt": "2026-07-18T21:00:00.000Z"
+  },
+  {
     "id": "tx-18241006",
     "txFixtureId": "18241006",
     "competition": "World Cup",
@@ -30,13 +38,5 @@
     "homeTeam": "Norway",
     "awayTeam": "England",
     "kickoffAt": "2026-07-11T21:00:00.000Z"
-  },
-  {
-    "id": "tx-18218149",
-    "txFixtureId": "18218149",
-    "competition": "World Cup",
-    "homeTeam": "Spain",
-    "awayTeam": "Belgium",
-    "kickoffAt": "2026-07-10T19:00:00.000Z"
   }
 ]
