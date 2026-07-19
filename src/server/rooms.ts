@@ -213,6 +213,14 @@ export async function getRoomBundle(code: string): Promise<RoomBundle | null> {
   const row = roomRow as RoomRow & { fixtures: FixtureRow };
   const room = toRoom(row, row.fixtures);
 
+  // Events are stored per fixture, but a replay is a private run: each room
+  // plays the recorded match again from the top. Without this the wire opens on
+  // the last room's match, a full run of phases sitting there before kickoff.
+  // A real match is shared, so a room joining one late still gets the goals it
+  // missed.
+  const eventQuery = db.from("match_events").select("*").eq("fixture_id", room.fixture.id);
+  if (room.fixture.kind === "replay") eventQuery.gte("received_at", room.createdAt);
+
   const [
     { data: memberRows },
     { data: questionRows },
@@ -225,17 +233,25 @@ export async function getRoomBundle(code: string): Promise<RoomBundle | null> {
     db.from("answers").select("*").eq("room_id", room.id),
     // Oldest first: the ticker and the live screen both read this as an append
     // only list.
-    db.from("match_events").select("*").eq("fixture_id", room.fixture.id).order("id"),
+    eventQuery.order("id"),
     db.from("match_state").select("*").eq("fixture_id", room.fixture.id).maybeSingle(),
   ]);
+
+  const events = ((eventRows as MatchEventDbRow[]) ?? []).map(toMatchEventRow);
+
+  // The running state is stored per fixture too. A replay room that has not
+  // played anything yet would otherwise open on the last room's final score,
+  // full time and all, before its own kickoff.
+  const stored = (stateRow as { state: MatchState } | null)?.state ?? null;
+  const ownRun = room.fixture.kind !== "replay" || events.length > 0;
 
   return {
     room,
     members: ((memberRows as MemberRow[]) ?? []).map(toMember),
     questions: ((questionRows as QuestionRow[]) ?? []).map(toQuestion),
     answers: ((answerRows as AnswerRow[]) ?? []).map(toAnswerRow),
-    events: ((eventRows as MatchEventDbRow[]) ?? []).map(toMatchEventRow),
-    matchState: ((stateRow as { state: MatchState } | null)?.state) ?? null,
+    events,
+    matchState: ownRun ? stored : null,
   };
 }
 
