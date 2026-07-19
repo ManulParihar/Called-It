@@ -6,6 +6,24 @@ an upcoming match. As the match plays out, the room reacts live to goals, cards,
 and penalties. At full time a leaderboard shows who called it, and the pot pays
 out or the loser owes the agreed forfeit.
 
+## Walkthrough
+
+<table>
+  <tr>
+    <td width="33%"><img src="./docs/screenshots/01-lobby.jpg" alt="Lobby: open a room or join your crew"><br><sub><b>1. Lobby.</b> Pick a mascot and a name, then open a room or drop in a friend's code.</sub></td>
+    <td width="33%"><img src="./docs/screenshots/02-pick-match.jpg" alt="Pick a match from live, upcoming, and replay fixtures"><br><sub><b>2. Pick the match.</b> Real fixtures pulled from TxLINE, plus recorded matches to replay.</sub></td>
+    <td width="33%"><img src="./docs/screenshots/03-stakes-money.jpg" alt="Set the stakes: money pot or forfeit"><br><sub><b>3. The stakes.</b> Stake into a shared money pot, or set a forfeit for the loser instead.</sub></td>
+  </tr>
+  <tr>
+    <td width="33%"><img src="./docs/screenshots/04-predict-swipe.jpg" alt="Swipe right for yes, left for no on each question"><br><sub><b>4. Call it.</b> Swipe right for yes, left for no on the five match questions.</sub></td>
+    <td width="33%"><img src="./docs/screenshots/05-slip.jpg" alt="Review the slip and stamp it in"><br><sub><b>5. The slip.</b> Four one-point calls plus the three-point headline, then stamp it in.</sub></td>
+    <td width="33%"><img src="./docs/screenshots/06-invite.jpg" alt="Invite the crew and wait for kickoff"><br><sub><b>6. Admit the crew.</b> Share the room code, watch everyone come through, then wait on the whistle.</sub></td>
+  </tr>
+  <tr>
+    <td width="33%"><img src="./docs/screenshots/07-full-time.jpg" alt="Full time leaderboard and settle up"><br><sub><b>7. Full time.</b> The room scores everyone, ranks the leaderboard, and settles the wager.</sub></td>
+  </tr>
+</table>
+
 ## How the game works
 
 1. One person creates a room and picks the wager.
