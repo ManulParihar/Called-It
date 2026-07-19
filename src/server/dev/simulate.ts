@@ -10,7 +10,7 @@
 import { existsSync } from "node:fs";
 import { serverDb } from "../db/supabase";
 import { getRoomBundle } from "../rooms";
-import { loadReplayLines, type ReplayLine } from "../txline/replay";
+import { closeTimeline, loadReplayLines, type ReplayLine } from "../txline/replay";
 import { loadState, processEvent } from "../worker/pipeline";
 import type { MatchEvent } from "../../lib/match";
 import type { Fixture } from "../../lib/types";
@@ -56,7 +56,11 @@ async function loadTimeline(
       .maybeSingle();
     const log = (data as { replay_log?: unknown[] | null } | null)?.replay_log;
     if (Array.isArray(log) && log.length > 0) {
-      return (log as ReplayLine[]).slice().sort((a, b) => a.offsetMs - b.offsetMs);
+      // Same closing as a recording read off disk: the stored log is a raw pull
+      // from the feed and can stop before the final whistle.
+      return closeTimeline(
+        (log as ReplayLine[]).slice().sort((a, b) => a.offsetMs - b.offsetMs),
+      );
     }
   }
   return loadReplayLines(logPathFor(fixture));
